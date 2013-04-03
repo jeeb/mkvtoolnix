@@ -256,6 +256,7 @@ public:
   explicit operator bool() const;
 
   memory_cptr pack();
+  bool parse_vps_list(bool ignore_errors = false);
   bool parse_sps_list(bool ignore_errors = false);
   bool parse_pps_list(bool ignore_errors = false);
 

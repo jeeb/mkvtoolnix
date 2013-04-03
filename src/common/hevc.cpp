@@ -62,6 +62,31 @@ hevcc_c::operator bool()
 }
 
 bool
+hevcc_c::parse_vps_list(bool ignore_errors) {
+  if (m_vps_info_list.size() == m_vps_list.size())
+    return true;
+
+  m_vps_info_list.clear();
+  for (auto &vps: m_vps_list) {
+    vps_info_t vps_info;
+    auto vps_as_rbsp = vps->clone();
+    nalu_to_rbsp(vps_as_rbsp);
+
+    if (ignore_errors) {
+      try {
+        parse_vps(vps_as_rbsp, vps_info);
+      } catch (mtx::mm_io::end_of_file_x &) {
+      }
+    } else if (!parse_vps(vps_as_rbsp, vps_info))
+      return false;
+
+    m_vps_info_list.push_back(vps_info);
+  }
+
+  return true;
+}
+
+bool
 hevcc_c::parse_sps_list(bool ignore_errors) {
   if (m_sps_info_list.size() == m_sps_list.size())
     return true;
