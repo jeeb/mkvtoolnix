@@ -84,6 +84,15 @@
 #define HEVC_NUM_PREDEFINED_PARS   17
 
 namespace hevc{
+    
+struct vps_info_t {
+  unsigned int id;
+
+  unsigned int sar_width;
+  unsigned int sar_height;
+
+  bool ar_found;
+};
 
 struct sps_info_t {
   unsigned int id;
@@ -103,7 +112,7 @@ struct sps_info_t {
 
   // vui:
   bool vui_present, ar_found;
-  unsigned int par_num, par_den;
+  unsigned int par_num, par_den; //WIP:HEVC remove these
 
   // timing_info:
   bool timing_info_present;
@@ -140,10 +149,6 @@ struct pps_info_t {
   void dump();
 };
 
-struct vps_info_t {
-  uint32_t id;
-};
-
 struct slice_info_t {
   unsigned char nalu_type;
   unsigned char nal_ref_idc;
@@ -173,6 +178,7 @@ struct slice_info_t {
 void nalu_to_rbsp(memory_cptr &buffer);
 void rbsp_to_nalu(memory_cptr &buffer);
 
+bool parse_vps(memory_cptr &buffer, vps_info_t &vps);
 bool parse_sps(memory_cptr &buffer, sps_info_t &sps, bool keep_ar_info = false);
 bool parse_pps(memory_cptr &buffer, pps_info_t &pps);
 

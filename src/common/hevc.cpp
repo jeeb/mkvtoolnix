@@ -449,6 +449,43 @@ hevc::rbsp_to_nalu(memory_cptr &buffer) {
   buffer = memory_cptr(new memory_c(d.get_and_lock_buffer(), d.getFilePointer(), true));
 }
 
+bool 
+hevc::parse_vps(memory_cptr &buffer,
+                      vps_info_t &vps) {
+  try {
+    bit_cursor_c r(buffer->get_buffer(), buffer->get_size());
+
+    memset(&vps, 0, sizeof(vps));
+
+    vps.sar_width = 1;
+    vps.sar_height = 1;
+    vps.ar_found = false;
+
+    r.skip_bits(1);             // forbidden_zero_bit
+    if (r.get_bits(6) != 32)    // nal_unit_type
+        return false;
+    r.skip_bits(6);             // nuh_reserved_zero_6bits
+    r.skip_bits(3);             // nuh_temporal_id_plus1
+
+    bool aspect_ratio_info_present_flag = r.get_bits(1);
+
+    if (aspect_ratio_info_present_flag) {
+      unsigned int aspect_ratio_idc = r.get_bits(8);  // aspect_ratio_idc
+
+      if (HEVC_EXTENDED_SAR == aspect_ratio_idc) {
+        vps.ar_found = true;
+
+        vps.sar_width = r.get_bits(16);     // sar_width
+        vps.sar_height = r.get_bits(16);    // sar_height
+      }
+    }
+
+    return true;
+  } catch (...) {
+    return false;
+  }
+}
+
 bool
 hevc::parse_sps(memory_cptr &buffer,
                       sps_info_t &sps,
@@ -1070,24 +1107,26 @@ hevc::hevc_es_parser_c::handle_vps_nalu(memory_cptr &nalu) {
   mxinfo("Parsing of HEVC VPS not complete\n");
 
   nalu_to_rbsp(nalu);
-/* Do any video paramater parsing here */
-  //if (!parse_vps(nalu, vps_info))
-  //  return;
+  if (!parse_vps(nalu, vps_info))
+    return;
+  rbsp_to_nalu(nalu);
+//WIP: HEVC
   m_vps_list.push_back(nalu);
   m_vps_info_list.push_back(vps_info);
-  rbsp_to_nalu(nalu);
+//WIP: HEVC
 }
 
 void
 hevc::hevc_es_parser_c::handle_sps_nalu(memory_cptr &nalu) {
   sps_info_t sps_info;
 
+//WIP: HEVC
   m_sps_list.push_back(nalu);
   m_sps_info_list.push_back(sps_info);
 
   mxinfo("Parsing of HEVC SPS not complete\n");
   return;
-
+//WIP: HEVC
   nalu_to_rbsp(nalu);
   if (!parse_sps(nalu, sps_info, m_keep_ar_info))
     return;
