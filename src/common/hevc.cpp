@@ -273,6 +273,122 @@ hrdcopy(bit_cursor_c &r,
 }
 
 static void
+profile_tier_copy(bit_cursor_c &r,
+        bit_writer_c &w,
+        unsigned int maxNumSubLayersMinus1) {
+  unsigned int i;
+  std::vector<bool> sub_layer_profile_present_flag, sub_layer_level_present_flag;
+
+  w.copy_bits(2+1+5, r);  // general_profile_space, general_tier_flag, general_profile_idc
+  w.copy_bits(32, r);     // general_profile_compatibility_flag[]
+  w.copy_bits(4, r);      // general_progressive_source_flag, general_interlaced_source_flag, general_non_packed_constraint_flag, general_frame_only_constraint_flag
+  w.copy_bits(44, r);     // general_reserved_zero_44bits
+  w.copy_bits(8, r);      // general_level_idc
+
+  for (i = 0; i < maxNumSubLayersMinus1; i++) {
+    sub_layer_profile_present_flag.push_back(w.copy_bits(1, r)); // sub_layer_profile_present_flag[i]
+    sub_layer_level_present_flag.push_back(w.copy_bits(1, r));   // sub_layer_level_present_flag[i]
+  }
+
+  if (maxNumSubLayersMinus1 > 0)
+    for (i = maxNumSubLayersMinus1; i < 8; i++)
+      w.copy_bits(2, r);  // reserved_zero_2bits
+
+  for (i = 0; i < maxNumSubLayersMinus1; i++) {
+    if (sub_layer_profile_present_flag[i]) {
+      w.copy_bits(2+1+5, r);  // sub_layer_profile_space[i], sub_layer_tier_flag[i], sub_layer_profile_idc[i]
+      w.copy_bits(32, r);     // sub_layer_profile_compatibility_flag[i][]
+      w.copy_bits(4, r);      // sub_layer_progressive_source_flag[i], sub_layer_interlaced_source_flag[i], sub_layer_non_packed_constraint_flag[i], sub_layer_frame_only_constraint_flag[i]
+      w.copy_bits(44, r);     // sub_layer_reserved_zero_44bits[i]
+    }
+    if (sub_layer_level_present_flag[i]) {
+      w.copy_bits(8, r);      // sub_layer_level_idc[i]
+    }
+  }
+}
+
+static void
+sub_layer_hrd_parameters_copy(bit_cursor_c &r,
+        bit_writer_c &w,
+        unsigned int CpbCnt,
+        bool sub_pic_cpb_params_present_flag) {
+  unsigned int i;
+
+  for (i = 0; i <= CpbCnt; i++) {
+    gecopy(r, w); // bit_rate_value_minus1[i]
+		gecopy(r, w); // cpb_size_value_minus1[i]
+
+    if (sub_pic_cpb_params_present_flag) {
+      gecopy(r, w); // cpb_size_du_value_minus1[i]
+      gecopy(r, w); // bit_rate_du_value_minus1[i]
+		}
+
+    w.copy_bits(1, r); // cbr_flag[i]
+  }
+}
+
+static void
+hrd_parameters_copy(bit_cursor_c &r,
+        bit_writer_c &w,
+        bool commonInfPresentFlag,
+        unsigned int maxNumSubLayersMinus1) {
+  unsigned int i;
+
+  bool nal_hrd_parameters_present_flag = false;
+  bool vcl_hrd_parameters_present_flag = false;
+  bool sub_pic_cpb_params_present_flag = false;
+
+  if(commonInfPresentFlag)
+  {
+    nal_hrd_parameters_present_flag = w.copy_bits(1, r); // nal_hrd_parameters_present_flag
+    vcl_hrd_parameters_present_flag = w.copy_bits(1, r); // vcl_hrd_parameters_present_flag
+
+    if (nal_hrd_parameters_present_flag || vcl_hrd_parameters_present_flag) {
+      sub_pic_cpb_params_present_flag = w.copy_bits(1, r); // sub_pic_cpb_params_present_flag
+      if (sub_pic_cpb_params_present_flag) {
+				  w.copy_bits(8, r);  // tick_divisor_minus2
+				  w.copy_bits(5, r);  // du_cpb_removal_delay_increment_length_minus1
+				  w.copy_bits(1, r);  // sub_pic_cpb_params_in_pic_timing_sei_flag
+				  w.copy_bits(5, r);  // dpb_output_delay_du_length_minus1
+      }
+
+      w.copy_bits(4+4, r);  // bit_rate_scale, cpb_size_scale
+
+      if (sub_pic_cpb_params_present_flag)
+        w.copy_bits(4, r);  // cpb_size_du_scale
+
+      w.copy_bits(5, r);  // initial_cpb_removal_delay_length_minus1
+      w.copy_bits(5, r);  // au_cpb_removal_delay_length_minus1
+      w.copy_bits(5, r);  // dpb_output_delay_length_minus1
+    }
+  }
+
+  for (i = 0; i <= maxNumSubLayersMinus1; i++) {
+    bool fixed_pic_rate_general_flag = w.copy_bits(1, r); // fixed_pic_rate_general_flag[i]
+    bool fixed_pic_rate_within_cvs_flag = false;
+    bool low_delay_hrd_flag = false;
+    unsigned int CpbCnt = 0;
+
+    if (!fixed_pic_rate_general_flag)
+      fixed_pic_rate_within_cvs_flag = w.copy_bits(1, r); // fixed_pic_rate_within_cvs_flag[i]
+
+    if (fixed_pic_rate_within_cvs_flag)
+        gecopy(r, w);                                     // elemental_duration_in_tc_minus1[i]
+      else
+        low_delay_hrd_flag = w.copy_bits(1, r);           // low_delay_hrd_flag[i]
+
+    if (!low_delay_hrd_flag)
+      CpbCnt = gecopy(r, w);                              // cpb_cnt_minus1[i]
+
+    if (nal_hrd_parameters_present_flag)
+      sub_layer_hrd_parameters_copy(r, w, CpbCnt, sub_pic_cpb_params_present_flag);
+
+    if (vcl_hrd_parameters_present_flag)
+      sub_layer_hrd_parameters_copy(r, w, CpbCnt, sub_pic_cpb_params_present_flag);
+  }
+}
+
+static void
 slcopy(bit_cursor_c &r,
        bit_writer_c &w,
        int size) {
@@ -452,38 +568,73 @@ hevc::rbsp_to_nalu(memory_cptr &buffer) {
 bool 
 hevc::parse_vps(memory_cptr &buffer,
                       vps_info_t &vps) {
-  try {
-    bit_cursor_c r(buffer->get_buffer(), buffer->get_size());
+  int size              = buffer->get_size();
+  unsigned char *newsps = (unsigned char *)safemalloc(size + 100);
+  memory_cptr mcptr_newsps(new memory_c(newsps, size, true));
+  bit_cursor_c r(buffer->get_buffer(), size);
+  bit_writer_c w(newsps, size);
+  unsigned int i, j;
 
-    memset(&vps, 0, sizeof(vps));
+  memset(&vps, 0, sizeof(vps));
 
-    vps.sar_width = 1;
-    vps.sar_height = 1;
-    vps.ar_found = false;
+  w.copy_bits(1, r);            // forbidden_zero_bit
+  if (w.copy_bits(6, r) != 32)  // nal_unit_type
+      return false;
+  w.copy_bits(6, r);            // nuh_reserved_zero_6bits
+  w.copy_bits(3, r);            // nuh_temporal_id_plus1
 
-    r.skip_bits(1);             // forbidden_zero_bit
-    if (r.get_bits(6) != 32)    // nal_unit_type
-        return false;
-    r.skip_bits(6);             // nuh_reserved_zero_6bits
-    r.skip_bits(3);             // nuh_temporal_id_plus1
+  vps.id = w.copy_bits(4, r);                     // vps_video_parameter_set_id
+  w.copy_bits(2+6, r);                            // vps_reserved_three_2bits, vps_reserved_zero_6bits
+  bool max_sub_layers_minus1 = w.copy_bits(3, r); // vps_max_sub_layers_minus1
+  w.copy_bits(1+16, r);                           // vps_temporal_id_nesting_flag, vps_reserved_0xffff_16bits
 
-    bool aspect_ratio_info_present_flag = r.get_bits(1);
+  profile_tier_copy(r, w, max_sub_layers_minus1); // profile_tier_level(vps_max_sub_layers_minus1)
 
-    if (aspect_ratio_info_present_flag) {
-      unsigned int aspect_ratio_idc = r.get_bits(8);  // aspect_ratio_idc
-
-      if (HEVC_EXTENDED_SAR == aspect_ratio_idc) {
-        vps.ar_found = true;
-
-        vps.sar_width = r.get_bits(16);     // sar_width
-        vps.sar_height = r.get_bits(16);    // sar_height
-      }
-    }
-
-    return true;
-  } catch (...) {
-    return false;
+  bool vps_sub_layer_ordering_info_present_flag = w.copy_bits(1, r);  // vps_sub_layer_ordering_info_present_flag
+  for (i = (vps_sub_layer_ordering_info_present_flag ? 
+    0 : max_sub_layers_minus1);
+    i <= max_sub_layers_minus1; i++) {
+    gecopy(r, w); // vps_max_dec_pic_buffering_minus1[i]
+    gecopy(r, w); // vps_max_num_reorder_pics[i]
+    gecopy(r, w); // vps_max_latency_increase[i]
   }
+
+  unsigned int vps_max_nuh_reserved_zero_layer_id = w.copy_bits(6, r);  // vps_max_nuh_reserved_zero_layer_id
+  bool vps_num_op_sets_minus1 = gecopy(r, w);       // vps_num_op_sets_minus1
+  for (i = 1; i <= vps_num_op_sets_minus1; i++) {
+    for (j = 0; j <= vps_max_nuh_reserved_zero_layer_id; j++) { // operation_point_set(i)
+      w.copy_bits(1, r);  // layer_id_included_flag
+    }
+  }
+
+  if (w.copy_bits(1, r) == 1) { // vps_timing_info_present_flag
+    w.copy_bits(32, r);         // vps_num_units_in_tick
+    w.copy_bits(32, r);         // vps_time_scale
+    if(w.copy_bits(1, r) == 1)  // vps_poc_proportional_to_timing_flag
+      gecopy(r, w);             // vps_num_ticks_poc_diff_one_minus1
+    unsigned int vps_num_hrd_parameters = gecopy(r, w); // vps_num_hrd_parameters
+    for (i = 0; i < vps_num_hrd_parameters; i++) {
+      bool cprms_present_flag = false;
+      gecopy(r, w);             // hrd_op_set_idx[i]
+      if (i > 0)
+        cprms_present_flag = w.copy_bits(1, r); // cprms_present_flag[i]
+      hrd_parameters_copy(r, w, cprms_present_flag, max_sub_layers_minus1);
+    }
+  }
+
+  if(w.copy_bits(1, r) == 1)    // vps_extension_flag
+    while (!r.eof())
+      w.copy_bits(1, r);        // vps_extension_data_flag
+
+  w.put_bit(1);
+  w.byte_align();
+
+  buffer = mcptr_newsps;
+  buffer->set_size(w.get_bit_position() / 8);
+
+  vps.checksum = calc_adler32(buffer->get_buffer(), buffer->get_size());
+
+  return true;
 }
 
 bool
@@ -665,7 +816,83 @@ hevc::parse_sps(memory_cptr &buffer,
       gecopy(r, w);               // max_dec_frame_buffering
     }
   }
+  
+  /*WIP:HEVC pretty much all of this needs migrated to replace stuff in parse_sps
+  vps.sar_width = 1;
+  vps.sar_height = 1;
+  vps.ar_found = false;
 
+  w.copy_bits(1, r);            // forbidden_zero_bit
+  if (w.copy_bits(6, r) != 32)  // nal_unit_type
+      return false;
+  w.copy_bits(6, r);            // nuh_reserved_zero_6bits
+  w.copy_bits(3, r);            // nuh_temporal_id_plus1
+
+  if (r.get_bit() == 1) {                   // aspect_ratio_info_present_flag
+    unsigned int ar_type = r.get_bits(8);   // aspect_ratio_idc
+
+    if (keep_ar_info) {
+      w.put_bit(1);
+      w.put_bits(8, ar_type);
+    } else
+      w.put_bit(0);
+
+    vps.ar_found = true;
+
+    if (HEVC_EXTENDED_SAR == ar_type) {
+      vps.sar_width = r.get_bits(16);   // sar_width
+      vps.sar_height = r.get_bits(16);  // sar_height
+
+      if (keep_ar_info) {
+        w.put_bits(16, vps.sar_width);
+        w.put_bits(16, vps.sar_height);
+      }
+    } else if (HEVC_NUM_PREDEFINED_PARS >= ar_type) {
+      vps.sar_width = s_predefined_pars[ar_type].numerator;
+      vps.sar_height = s_predefined_pars[ar_type].denominator;
+    } else
+      vps.ar_found = false;
+  }
+
+  // copy the rest
+  if (w.copy_bits(1, r) == 1)   // overscan_info_present_flag
+    w.copy_bits(1, r);          // overscan_appropriate_flag
+  if (w.copy_bits(1, r) == 1) { // video_signal_type_present_flag
+    w.copy_bits(4, r);          // video_format, video_full_range_flag
+    if (w.copy_bits(1, r) == 1) // color_desc_present_flag
+      w.copy_bits(24, r);       // colour_primaries, transfer_characteristics, matrix_coefficients
+  }
+  if (w.copy_bits(1, r) == 1) { // chroma_loc_info_present_flag
+    gecopy(r, w);               // chroma_sample_loc_type_top_field
+    gecopy(r, w);               // chroma_sample_loc_type_bottom_field
+  }
+  w.copy_bits(3, r);            // neutral_chroma_indication_flag, field_seq_flag, frame_field_info_present_flag
+  if (w.copy_bits(1, r) == 1) { // default_display_window_flag
+    gecopy(r, w);               // def_disp_win_left_offset
+    gecopy(r, w);               // def_disp_win_right_offset
+    gecopy(r, w);               // def_disp_win_top_offset
+    gecopy(r, w);               // def_disp_win_bottom_offset
+  }
+  vps.vui_timing_info_present_flag = w.copy_bits(1, r); // vui_timing_info_present_flag
+  if (vps.vui_timing_info_present_flag) {
+    vps.vui_num_units_in_tick = w.copy_bits(32, r);     // vui_num_units_in_tick
+    vps.vui_time_scale        = w.copy_bits(32, r);     // vui_time_scale
+    if (w.copy_bits(1, r) == 1) { // vui_poc_proportional_to_timing_flag
+      gecopy(r, w); // vui_num_ticks_poc_diff_one_minus1
+    }
+    if (w.copy_bits(1, r) == 1) { // vui_hrd_parameters_present_flag
+      hrdcopy(r, w);//WIP:HEVC hrdcopy needs new implementation
+    }
+    if (w.copy_bits(1, r) == 1) { // bitstream_restriction_flag
+      w.copy_bits(3, r);  // tiles_fixed_structure_flag, motion_vectors_over_pic_boundaries_flag, restricted_ref_pic_lists_flag
+      gecopy(r, w); // min_spatial_segmentation_idc
+      gecopy(r, w); // max_bytes_per_pic_denom
+      gecopy(r, w); // max_bits_per_mincu_denom
+      gecopy(r, w); // log2_max_mv_length_horizontal
+      gecopy(r, w); // log2_max_mv_length_vertical
+    }
+  }
+  */
   w.put_bit(1);
   w.byte_align();
 
@@ -1104,16 +1331,30 @@ void
 hevc::hevc_es_parser_c::handle_vps_nalu(memory_cptr &nalu) {
   vps_info_t vps_info;
 
-  mxinfo("Parsing of HEVC VPS not complete\n");
-
   nalu_to_rbsp(nalu);
   if (!parse_vps(nalu, vps_info))
     return;
   rbsp_to_nalu(nalu);
-//WIP: HEVC
-  m_vps_list.push_back(nalu);
-  m_vps_info_list.push_back(vps_info);
-//WIP: HEVC
+
+  size_t i;
+  for (i = 0; m_vps_info_list.size() > i; ++i)
+    if (m_vps_info_list[i].id == vps_info.id)
+      break;
+
+  if (m_vps_info_list.size() == i) {
+    m_vps_list.push_back(nalu);
+    m_vps_info_list.push_back(vps_info);
+    m_hevcc_changed = true;
+
+  } else if (m_vps_info_list[i].checksum != vps_info.checksum) {
+    mxverb(2, boost::format("hevc: VPS ID %|1$04x| changed; checksum old %|2$04x| new %|3$04x|\n") % vps_info.id % m_vps_info_list[i].checksum % vps_info.checksum);
+
+    m_vps_info_list[i] = vps_info;
+    m_vps_list[i]      = nalu;
+    m_hevcc_changed     = true;
+  }
+
+  m_extra_data.push_back(create_nalu_with_size(nalu));
 }
 
 void

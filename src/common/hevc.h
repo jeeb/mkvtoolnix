@@ -88,10 +88,11 @@ namespace hevc{
 struct vps_info_t {
   unsigned int id;
 
-  unsigned int sar_width;
-  unsigned int sar_height;
+  uint32_t checksum;
 
-  bool ar_found;
+  vps_info_t() {
+    memset(this, 0, sizeof(*this));
+  }
 };
 
 struct sps_info_t {
@@ -112,7 +113,7 @@ struct sps_info_t {
 
   // vui:
   bool vui_present, ar_found;
-  unsigned int par_num, par_den; //WIP:HEVC remove these
+  unsigned int par_num, par_den;
 
   // timing_info:
   bool timing_info_present;
