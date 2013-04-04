@@ -95,13 +95,31 @@ struct vps_info_t {
   }
 };
 
+struct short_term_ref_pic_set_t {
+  int inter_ref_pic_set_prediction_flag;
+  int delta_idx;
+  int delta_rps_sign;
+  int abs_delta_rps;
+
+  int delta_poc[16+1];
+  int used[16+1];
+  int ref_id[16+1];
+
+  int num_ref_id;
+  int num_pics;
+  int num_negative_pics;
+  int num_positive_pics;
+};
+
 struct sps_info_t {
-  unsigned int id;
+  unsigned int id;//WIP:HEVC parsed
+
+  short_term_ref_pic_set_t short_term_ref_pic_sets[64];//WIP:HEVC parsed
 
   unsigned int profile_idc;
   unsigned int profile_compat;
   unsigned int level_idc;
-  unsigned int chroma_format_idc;
+  unsigned int chroma_format_idc;//WIP:HEVC parsed
   unsigned int log2_max_frame_num;
   unsigned int pic_order_cnt_type;
   unsigned int log2_max_pic_order_cnt_lsb;
@@ -112,8 +130,8 @@ struct sps_info_t {
   bool frame_mbs_only;
 
   // vui:
-  bool vui_present, ar_found;
-  unsigned int par_num, par_den;
+  bool vui_present, ar_found;//WIP:HEVC parsed
+  unsigned int par_num, par_den;//WIP:HEVC parsed
 
   // timing_info:
   bool timing_info_present;
@@ -123,7 +141,7 @@ struct sps_info_t {
   unsigned int crop_left, crop_top, crop_right, crop_bottom;
   unsigned int width, height;
 
-  uint32_t checksum;
+  uint32_t checksum;//WIP:HEVC parsed
 
   sps_info_t() {
     memset(this, 0, sizeof(*this));
