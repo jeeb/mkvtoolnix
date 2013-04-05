@@ -947,14 +947,15 @@ hevc::parse_pps(memory_cptr &buffer,
 
     memset(&pps, 0, sizeof(pps));
 
-    r.skip_bits(3);             // forbidden_zero_bit, nal_ref_idc
-    if (r.get_bits(5) != 8)     // nal_unit_type
+    r.skip_bits(1);             // forbidden_zero_bit
+    if (r.get_bits(6) != 34)    // nal_unit_type
       return false;
-    pps.id     = geread(r);
-    pps.sps_id = geread(r);
+    r.skip_bits(6);             // nuh_reserved_zero_6bits
+    r.skip_bits(3);             // nuh_temporal_id_plus1
 
-    r.skip_bits(1);             // entropy_coding_mode_flag
-    pps.pic_order_present = r.get_bit();
+    pps.id     = geread(r);     // pps_pic_parameter_set_id
+    pps.sps_id = geread(r);     // pps_seq_parameter_set_id
+
     pps.checksum          = calc_adler32(buffer->get_buffer(), buffer->get_size());
 
     return true;
@@ -1447,12 +1448,6 @@ hevc::hevc_es_parser_c::handle_sps_nalu(memory_cptr &nalu) {
 void
 hevc::hevc_es_parser_c::handle_pps_nalu(memory_cptr &nalu) {
   pps_info_t pps_info;
-
-  m_pps_list.push_back(nalu);
-  m_pps_info_list.push_back(pps_info);
-
-  mxinfo("Parsing of HEVC PPS not complete\n");
-  return;
 
   nalu_to_rbsp(nalu);
   if (!parse_pps(nalu, pps_info))

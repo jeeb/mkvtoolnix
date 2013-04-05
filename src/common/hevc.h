@@ -146,12 +146,12 @@ struct sps_info_t {
 };
 
 struct pps_info_t {
-  unsigned id;
-  unsigned sps_id;
+  unsigned id;//WIP:HEVC parsed
+  unsigned sps_id;//WIP:HEVC parsed
 
   bool pic_order_present;
 
-  uint32_t checksum;
+  uint32_t checksum;//WIP:HEVC parsed
 
   pps_info_t() {
     memset(this, 0, sizeof(*this));
