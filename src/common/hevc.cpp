@@ -1363,6 +1363,7 @@ hevc::hevc_es_parser_c::handle_slice_nalu(memory_cptr &nalu) {
 
   ++m_frame_number;
 }
+
 void
 hevc::hevc_es_parser_c::handle_vps_nalu(memory_cptr &nalu) {
   vps_info_t vps_info;

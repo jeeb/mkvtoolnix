@@ -112,28 +112,28 @@ struct short_term_ref_pic_set_t {
 };
 
 struct sps_info_t {
-  unsigned int id;//WIP:HEVC parsed
+  unsigned int id;
 
-  short_term_ref_pic_set_t short_term_ref_pic_sets[64];//WIP:HEVC parsed
+  short_term_ref_pic_set_t short_term_ref_pic_sets[64];
 
-  unsigned int chroma_format_idc;//WIP:HEVC parsed
-  unsigned int log2_max_frame_num;
-  unsigned int pic_order_cnt_type;
-  unsigned int log2_max_pic_order_cnt_lsb;
-  bool delta_pic_order_always_zero_flag;
-  bool frame_mbs_only;
+  unsigned int chroma_format_idc;
+  unsigned int log2_max_frame_num;//WIP:HEVC equivalent?
+  unsigned int pic_order_cnt_type;//WIP:HEVC equivalent?
+  unsigned int log2_max_pic_order_cnt_lsb;//WIP:HEVC equivalent?
+  bool delta_pic_order_always_zero_flag;//WIP:HEVC equivalent?
+  bool frame_mbs_only;//WIP:HEVC equivalent?
 
   // vui:
-  bool vui_present, ar_found;//WIP:HEVC parsed
-  unsigned int par_num, par_den;//WIP:HEVC parsed
+  bool vui_present, ar_found;
+  unsigned int par_num, par_den;
 
   // timing_info:
-  bool timing_info_present;//WIP:HEVC parsed
-  unsigned int num_units_in_tick, time_scale;//WIP:HEVC parsed
+  bool timing_info_present;
+  unsigned int num_units_in_tick, time_scale;
 
-  unsigned int width, height;//WIP:HEVC parsed
+  unsigned int width, height;
 
-  uint32_t checksum;//WIP:HEVC parsed
+  uint32_t checksum;
 
   sps_info_t() {
     memset(this, 0, sizeof(*this));
@@ -146,12 +146,12 @@ struct sps_info_t {
 };
 
 struct pps_info_t {
-  unsigned id;//WIP:HEVC parsed
-  unsigned sps_id;//WIP:HEVC parsed
+  unsigned id;
+  unsigned sps_id;
 
-  bool pic_order_present;
+  bool pic_order_present;//WIP:HEVC equivalent?
 
-  uint32_t checksum;//WIP:HEVC parsed
+  uint32_t checksum;
 
   pps_info_t() {
     memset(this, 0, sizeof(*this));
@@ -293,10 +293,10 @@ protected:
   int64_t m_max_timecode;
   std::map<int64_t, int64_t> m_duration_frequency;
 
-  std::vector<memory_cptr> m_sps_list, m_pps_list, m_vps_list, m_extra_data;
+  std::vector<memory_cptr> m_vps_list, m_sps_list, m_pps_list, m_extra_data;
+  std::vector<vps_info_t> m_vps_info_list;
   std::vector<sps_info_t> m_sps_info_list;
   std::vector<pps_info_t> m_pps_info_list;
-  std::vector<vps_info_t> m_vps_info_list;
 
   memory_cptr m_unparsed_buffer;
   uint64_t m_stream_position, m_parsed_position;
@@ -429,9 +429,9 @@ public:
 
 protected:
   bool parse_slice(memory_cptr &buffer, slice_info_t &si);
+  void handle_vps_nalu(memory_cptr &nalu);
   void handle_sps_nalu(memory_cptr &nalu);
   void handle_pps_nalu(memory_cptr &nalu);
-  void handle_vps_nalu(memory_cptr &nalu);
   void handle_sei_nalu(memory_cptr &nalu);
   void handle_slice_nalu(memory_cptr &nalu);
   void cleanup();
