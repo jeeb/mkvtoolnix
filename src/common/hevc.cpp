@@ -1549,7 +1549,7 @@ hevc::hevc_es_parser_c::handle_nalu(memory_cptr nalu) {
 //    case HEVC_NALU_TYPE_DP_B_SLICE:
 //    case HEVC_NALU_TYPE_DP_C_SLICE:
     case HEVC_NALU_TYPE_IDR_W_RADL:
-      if (!m_hevcc_ready && !m_sps_info_list.empty() && !m_pps_info_list.empty() && !m_vps_info_list.empty()) {
+      if (!m_hevcc_ready && !m_vps_info_list.empty() && !m_sps_info_list.empty() && !m_pps_info_list.empty()) {
         m_hevcc_ready = true;
         flush_unhandled_nalus();
       }
@@ -1558,7 +1558,7 @@ hevc::hevc_es_parser_c::handle_nalu(memory_cptr nalu) {
 
     default:
       flush_incomplete_frame();
-      if (!m_hevcc_ready && !m_sps_info_list.empty() && !m_pps_info_list.empty() && !m_vps_info_list.empty()) {
+      if (!m_hevcc_ready && !m_vps_info_list.empty() && !m_sps_info_list.empty() && !m_pps_info_list.empty()) {
         m_hevcc_ready = true;
         flush_unhandled_nalus();
       }
