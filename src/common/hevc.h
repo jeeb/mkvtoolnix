@@ -116,16 +116,10 @@ struct sps_info_t {
 
   short_term_ref_pic_set_t short_term_ref_pic_sets[64];//WIP:HEVC parsed
 
-  unsigned int profile_idc;
-  unsigned int profile_compat;
-  unsigned int level_idc;
   unsigned int chroma_format_idc;//WIP:HEVC parsed
   unsigned int log2_max_frame_num;
   unsigned int pic_order_cnt_type;
   unsigned int log2_max_pic_order_cnt_lsb;
-  unsigned int offset_for_non_ref_pic;
-  unsigned int offset_for_top_to_bottom_field;
-  unsigned int num_ref_frames_in_pic_order_cnt_cycle;
   bool delta_pic_order_always_zero_flag;
   bool frame_mbs_only;
 
@@ -134,12 +128,10 @@ struct sps_info_t {
   unsigned int par_num, par_den;//WIP:HEVC parsed
 
   // timing_info:
-  bool timing_info_present;
-  unsigned int num_units_in_tick, time_scale;
-  bool fixed_frame_rate;
+  bool timing_info_present;//WIP:HEVC parsed
+  unsigned int num_units_in_tick, time_scale;//WIP:HEVC parsed
 
-  unsigned int crop_left, crop_top, crop_right, crop_bottom;
-  unsigned int width, height;
+  unsigned int width, height;//WIP:HEVC parsed
 
   uint32_t checksum;//WIP:HEVC parsed
 
@@ -261,7 +253,7 @@ public:
 
 class hevcc_c {
 public:
-  unsigned int m_profile_idc, m_profile_compat, m_level_idc, m_nalu_size_length;
+  unsigned int m_nalu_size_length;
   std::vector<memory_cptr> m_sps_list, m_pps_list, m_vps_list;
   std::vector<sps_info_t> m_sps_info_list;
   std::vector<pps_info_t> m_pps_info_list;
