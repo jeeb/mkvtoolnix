@@ -254,14 +254,14 @@ public:
 class hevcc_c {
 public:
   unsigned int m_nalu_size_length;
-  std::vector<memory_cptr> m_sps_list, m_pps_list, m_vps_list;
+  std::vector<memory_cptr> m_vps_list, m_sps_list, m_pps_list;
+  std::vector<vps_info_t> m_vps_info_list;
   std::vector<sps_info_t> m_sps_info_list;
   std::vector<pps_info_t> m_pps_info_list;
-  std::vector<vps_info_t> m_vps_info_list;
 
 public:
   hevcc_c();
-  hevcc_c(unsigned int nalu_size_len, std::vector<memory_cptr> const &sps_list, std::vector<memory_cptr> const &pps_list);
+  hevcc_c(unsigned int nalu_size_len, std::vector<memory_cptr> const &vps_list, std::vector<memory_cptr> const &sps_list, std::vector<memory_cptr> const &pps_list);
 
   explicit operator bool() const;
 

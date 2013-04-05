@@ -38,9 +38,11 @@ hevcc_c::hevcc_c()
 }
 
 hevcc_c::hevcc_c(unsigned int nalu_size_length,
+               std::vector<memory_cptr> const &vps_list,
                std::vector<memory_cptr> const &sps_list,
                std::vector<memory_cptr> const &pps_list)
   : m_nalu_size_length{nalu_size_length}
+  , m_vps_list{vps_list}
   , m_sps_list{sps_list}
   , m_pps_list{pps_list}
 {
@@ -49,8 +51,10 @@ hevcc_c::hevcc_c(unsigned int nalu_size_length,
 hevcc_c::operator bool()
   const {
   return m_nalu_size_length
+      && !m_vps_list.empty()
       && !m_sps_list.empty()
       && !m_pps_list.empty()
+      && (m_vps_info_list.empty() || (m_vps_info_list.size() == m_vps_list.size()))
       && (m_sps_info_list.empty() || (m_sps_info_list.size() == m_sps_list.size()))
       && (m_pps_info_list.empty() || (m_pps_info_list.size() == m_pps_list.size()));
 }
@@ -272,23 +276,6 @@ sgecopy(bit_cursor_c &r,
         bit_writer_c &w) {
   int v = gecopy(r, w);
   return v & 1 ? (v + 1) / 2 : -(v / 2);
-}
-
-static void
-hrdcopy(bit_cursor_c &r,
-        bit_writer_c &w) {
-  int ncpb = gecopy(r,w);       // cpb_cnt_minus1
-  w.copy_bits(4, r);            // bit_rate_scale
-  w.copy_bits(4, r);            // cpb_size_scale
-  for (int i = 0; i <= ncpb; ++i) {
-    gecopy(r,w);                // bit_rate_value_minus1
-    gecopy(r,w);                // cpb_size_value_minus1
-    w.copy_bits(1, r);          // cbr_flag
-  }
-  w.copy_bits(5, r);            // initial_cpb_removal_delay_length_minus1
-  w.copy_bits(5, r);            // cpb_removal_delay_length_minus1
-  w.copy_bits(5, r);            // dpb_output_delay_length_minus1
-  w.copy_bits(5, r);            // time_offset_length
 }
 
 static void
@@ -1887,7 +1874,7 @@ hevc::hevc_es_parser_c::create_nalu_with_size(const memory_cptr &src,
 memory_cptr
 hevc::hevc_es_parser_c::get_hevcc()
   const {
-  return hevcc_c{static_cast<unsigned int>(m_nalu_size_length), m_sps_list, m_pps_list}.pack();
+  return hevcc_c{static_cast<unsigned int>(m_nalu_size_length), m_vps_list, m_sps_list, m_pps_list}.pack();
 }
 
 bool
