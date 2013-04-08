@@ -1579,14 +1579,19 @@ hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
 
     memset(&si, 0, sizeof(si));
 
-    r.get_bits(1); //Forbidden zero bit
-    //si.nal_ref_idc = r.get_bits(3); // forbidden_zero_bit, nal_ref_idc
-    si.nalu_type   = r.get_bits(6); // si.nalu_type
+    r.get_bits(1);                // forbidden_zero_bit
+    si.nalu_type = r.get_bits(6); // nal_unit_type
+    r.get_bits(6);                // nuh_reserved_zero_6bits
+    r.get_bits(3);                // nuh_temporal_id_plus1
+
     if (   (HEVC_NALU_TYPE_TRAIL_N != si.nalu_type)
         && (HEVC_NALU_TYPE_TRAIL_R != si.nalu_type)
         &&  (HEVC_NALU_TYPE_IDR_W_RADL != si.nalu_type))
       return false;
 
+    //WIP:HEVC TODO
+    return true;
+    /*
     si.first_mb_in_slice = geread(r); // first_mb_in_slice
     si.type              = geread(r); // slice_type
 
@@ -1642,7 +1647,7 @@ hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
       si.delta_pic_order_cnt[0] = sgeread(r);
       if (pps.pic_order_present && !si.field_pic_flag)
         si.delta_pic_order_cnt[1] = sgeread(r);
-    }
+    }*/
 
     return true;
   } catch (...) {
