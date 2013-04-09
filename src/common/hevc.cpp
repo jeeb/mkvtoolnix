@@ -1351,12 +1351,8 @@ hevc::hevc_es_parser_c::handle_slice_nalu(memory_cptr &nalu) {
     return;
   }
 
-  bool is_i_slice =  (HEVC_SLICE_TYPE_I   == si.type)
-                  || (HEVC_SLICE_TYPE2_I  == si.type)
-                  || (HEVC_SLICE_TYPE_SI  == si.type)
-                  || (HEVC_SLICE_TYPE2_SI == si.type);
-  bool is_b_slice =  (HEVC_SLICE_TYPE_B   == si.type)
-                  || (HEVC_SLICE_TYPE2_B  == si.type);
+  bool is_i_slice =  (HEVC_SLICE_TYPE_I == si.type);
+  bool is_b_slice =  (HEVC_SLICE_TYPE_B == si.type);
 
   m_incomplete_frame.m_si       =  si;
   m_incomplete_frame.m_keyframe =  m_recovery_point_valid
