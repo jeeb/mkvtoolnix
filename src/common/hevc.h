@@ -346,7 +346,7 @@ protected:
     size_t num_frames_out, num_frames_discarded, num_timecodes_in, num_timecodes_generated, num_timecodes_discarded, num_field_slices, num_frame_slices;
 
     stats_t()
-      : num_slices_by_type(11, 0)
+      : num_slices_by_type(3, 0)
       , num_frames_out(0)
       , num_frames_discarded(0)
       , num_timecodes_in(0)
