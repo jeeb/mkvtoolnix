@@ -1562,9 +1562,20 @@ hevc::hevc_es_parser_c::handle_nalu(memory_cptr nalu) {
 
     case HEVC_NALU_TYPE_TRAIL_N:
     case HEVC_NALU_TYPE_TRAIL_R:
-//    case HEVC_NALU_TYPE_DP_B_SLICE:
-//    case HEVC_NALU_TYPE_DP_C_SLICE:
+    case HEVC_NALU_TYPE_TSA_N:
+    case HEVC_NALU_TYPE_TSA_R:
+    case HEVC_NALU_TYPE_STSA_N:
+    case HEVC_NALU_TYPE_STSA_R:
+    case HEVC_NALU_TYPE_RADL_N:
+    case HEVC_NALU_TYPE_RADL_R:
+    case HEVC_NALU_TYPE_RASL_N:
+    case HEVC_NALU_TYPE_RASL_R:
+    case HEVC_NALU_TYPE_BLA_W_LP:
+    case HEVC_NALU_TYPE_BLA_W_RADL:
+    case HEVC_NALU_TYPE_BLA_N_LP:
     case HEVC_NALU_TYPE_IDR_W_RADL:
+    case HEVC_NALU_TYPE_IDR_N_LP:
+    case HEVC_NALU_TYPE_CRA_NUT:
       if (!m_hevcc_ready && !m_vps_info_list.empty() && !m_sps_info_list.empty() && !m_pps_info_list.empty()) {
         m_hevcc_ready = true;
         flush_unhandled_nalus();
