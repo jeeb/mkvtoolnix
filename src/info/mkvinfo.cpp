@@ -365,7 +365,7 @@ create_codec_dependent_private_info(KaxCodecPrivate &c_priv,
                : hevcc.m_profile_idc ==   2 ? "Main 10"
                : hevcc.m_profile_idc ==   3 ? "Main Still Picture"
                :                             Y("Unknown"))
-            % (hevcc.m_level_idc / 10) % (hevcc.m_level_idc % 10)).str();
+            % (hevcc.m_level_idc / 3 / 10) % (hevcc.m_level_idc / 3 % 10)).str();
   }
 
   return "";
