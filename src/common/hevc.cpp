@@ -1147,14 +1147,12 @@ hevc::hevc_es_parser_c::~hevc_es_parser_c() {
     return;
 
   static const char *s_type_names[] = {
-    "P",  "B",  "I",  "SP",  "SI",
-    "P2", "B2", "I2", "SP2", "SI2",
-    "unknown"
+    "B",  "P",  "I", "unknown"
   };
 
   int i;
   mxdebug("hevc: Number of slices by type:\n");
-  for (i = 0; 10 >= i; ++i)
+  for (i = 0; 2 >= i; ++i)
     if (0 != m_stats.num_slices_by_type[i])
       mxdebug(boost::format("  %1%: %2%\n") % s_type_names[i] % m_stats.num_slices_by_type[i]);
 }
@@ -1663,6 +1661,8 @@ hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
         r.get_bits(1);  // slice_reserved_undetermined_flag[i]
 
       si.type = geread(r);  // slice_type
+
+      ++m_stats.num_slices_by_type[1 < si.type ? 2 : si.type];
     }
    
     return true;
