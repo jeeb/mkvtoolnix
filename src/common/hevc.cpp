@@ -33,7 +33,9 @@
 namespace hevc {
 
 hevcc_c::hevcc_c()
-  : m_nalu_size_length{}
+  : m_profile_idc{}
+  , m_level_idc{}
+  , m_nalu_size_length{}
 {
 }
 
@@ -41,7 +43,9 @@ hevcc_c::hevcc_c(unsigned int nalu_size_length,
                std::vector<memory_cptr> const &vps_list,
                std::vector<memory_cptr> const &sps_list,
                std::vector<memory_cptr> const &pps_list)
-  : m_nalu_size_length{nalu_size_length}
+  : m_profile_idc{}
+  , m_level_idc{}
+  , m_nalu_size_length{nalu_size_length}
   , m_vps_list{vps_list}
   , m_sps_list{sps_list}
   , m_pps_list{pps_list}
@@ -97,10 +101,10 @@ hevcc_c::parse_sps_list(bool ignore_errors) {
 
     if (ignore_errors) {
       try {
-        parse_sps(sps_as_rbsp, sps_info);
+        parse_sps(sps_as_rbsp, sps_info, m_vps_info_list);
       } catch (mtx::mm_io::end_of_file_x &) {
       }
-    } else if (!parse_sps(sps_as_rbsp, sps_info))
+    } else if (!parse_sps(sps_as_rbsp, sps_info, m_vps_info_list))
       return false;
 
     m_sps_info_list.push_back(sps_info);
@@ -136,6 +140,7 @@ hevcc_c::parse_pps_list(bool ignore_errors) {
 
 memory_cptr
 hevcc_c::pack() {
+  parse_vps_list(true);
   parse_sps_list(true);
   if (!*this)
     return memory_cptr{};
@@ -149,7 +154,7 @@ hevcc_c::pack() {
 
   auto destination = memory_c::alloc(total_size);
   auto buffer      = destination->get_buffer();
-  auto &sps        = *m_sps_info_list.begin();
+  auto &vps        = *m_vps_info_list.begin();
   auto write_list  = [&buffer](std::vector<memory_cptr> const &list, uint8_t num_byte_bits) {
     *buffer = list.size() | num_byte_bits;
     ++buffer;
@@ -163,9 +168,9 @@ hevcc_c::pack() {
   };
 
   buffer[0] = 1;
-  buffer[1] = 0;
+  buffer[1] = m_profile_idc    ? m_profile_idc    : vps.profile_idc;
   buffer[2] = 0;
-  buffer[3] = 0;
+  buffer[3] = m_level_idc      ? m_level_idc      : vps.level_idc;
   buffer[4] = 0xfc | (m_nalu_size_length - 1);
   buffer   += 5;
 
@@ -195,9 +200,9 @@ hevcc_c::unpack(memory_cptr const &mem) {
     };
 
     in.skip(1);                 // always 1
+    hevcc.m_profile_idc      = in.read_uint8();
     in.read_uint8();
-    in.read_uint8();
-    in.read_uint8();
+    hevcc.m_level_idc        = in.read_uint8();
     hevcc.m_nalu_size_length = (in.read_uint8() & 0x03) + 1;
 
     read_list(hevcc.m_sps_list, 0x0f);
@@ -281,15 +286,17 @@ sgecopy(bit_cursor_c &r,
 static void
 profile_tier_copy(bit_cursor_c &r,
         bit_writer_c &w,
+        hevc::vps_info_t &vps,
         unsigned int maxNumSubLayersMinus1) {
   unsigned int i;
   std::vector<bool> sub_layer_profile_present_flag, sub_layer_level_present_flag;
 
-  w.copy_bits(2+1+5, r);  // general_profile_space, general_tier_flag, general_profile_idc
+  w.copy_bits(2+1, r);    // general_profile_space, general_tier_flag
+  vps.profile_idc = w.copy_bits(5, r);  // general_profile_idc
   w.copy_bits(32, r);     // general_profile_compatibility_flag[]
   w.copy_bits(4, r);      // general_progressive_source_flag, general_interlaced_source_flag, general_non_packed_constraint_flag, general_frame_only_constraint_flag
   w.copy_bits(44, r);     // general_reserved_zero_44bits
-  w.copy_bits(8, r);      // general_level_idc
+  vps.level_idc = w.copy_bits(8, r);    // general_level_idc
 
   for (i = 0; i < maxNumSubLayersMinus1; i++) {
     sub_layer_profile_present_flag.push_back(w.copy_bits(1, r)); // sub_layer_profile_present_flag[i]
@@ -773,7 +780,7 @@ hevc::parse_vps(memory_cptr &buffer,
   bool max_sub_layers_minus1 = w.copy_bits(3, r); // vps_max_sub_layers_minus1
   w.copy_bits(1+16, r);                           // vps_temporal_id_nesting_flag, vps_reserved_0xffff_16bits
 
-  profile_tier_copy(r, w, max_sub_layers_minus1); // profile_tier_level(vps_max_sub_layers_minus1)
+  profile_tier_copy(r, w, vps, max_sub_layers_minus1);  // profile_tier_level(vps_max_sub_layers_minus1)
 
   bool vps_sub_layer_ordering_info_present_flag = w.copy_bits(1, r);  // vps_sub_layer_ordering_info_present_flag
   for (i = (vps_sub_layer_ordering_info_present_flag ? 
@@ -825,6 +832,7 @@ hevc::parse_vps(memory_cptr &buffer,
 bool
 hevc::parse_sps(memory_cptr &buffer,
                       sps_info_t &sps,
+                      std::vector<vps_info_t> &m_vps_info_list,
                       bool keep_ar_info) {
   int size              = buffer->get_size();
   unsigned char *newsps = (unsigned char *)safemalloc(size + 100);
@@ -847,11 +855,22 @@ hevc::parse_sps(memory_cptr &buffer,
   w.copy_bits(6, r);            // nuh_reserved_zero_6bits
   w.copy_bits(3, r);            // nuh_temporal_id_plus1
 
-  w.copy_bits(4, r);      // sps_video_parameter_set_id
+  sps.vps_id = w.copy_bits(4, r);                 // sps_video_parameter_set_id
   bool max_sub_layers_minus1 = w.copy_bits(3, r); // sps_max_sub_layers_minus1
-  w.copy_bits(1, r);      // sps_temporal_id_nesting_flag
+  w.copy_bits(1, r);                              // sps_temporal_id_nesting_flag
 
-  profile_tier_copy(r, w, max_sub_layers_minus1); // profile_tier_level(sps_max_sub_layers_minus1)
+  size_t vps_idx;
+  for (vps_idx = 0; m_vps_info_list.size() > vps_idx; ++vps_idx)
+    if (m_vps_info_list[vps_idx].id == sps.vps_id)
+      break;
+  if (m_vps_info_list.size() == vps_idx)
+    return false;
+
+  sps.vps = vps_idx;
+
+  vps_info_t &vps = m_vps_info_list[vps_idx];
+
+  profile_tier_copy(r, w, vps, max_sub_layers_minus1);  // profile_tier_level(sps_max_sub_layers_minus1)
 
   sps.id = gecopy(r, w);  // sps_seq_parameter_set_id
 
@@ -881,8 +900,8 @@ hevc::parse_sps(memory_cptr &buffer,
     gecopy(r, w); // sps_max_latency_increase[i]
   }
 
-  gecopy(r, w); // log2_min_luma_coding_block_size_minus3
-  gecopy(r, w); // log2_diff_max_min_luma_coding_block_size
+  sps.log2_min_luma_coding_block_size_minus3 = gecopy(r, w); // log2_min_luma_coding_block_size_minus3
+  sps.log2_diff_max_min_luma_coding_block_size = gecopy(r, w); // log2_diff_max_min_luma_coding_block_size
   gecopy(r, w); // log2_min_transform_block_size_minus2
   gecopy(r, w); // log2_diff_max_min_transform_block_size
   gecopy(r, w); // max_transform_hierarchy_depth_inter
@@ -955,6 +974,9 @@ hevc::parse_pps(memory_cptr &buffer,
 
     pps.id     = geread(r);     // pps_pic_parameter_set_id
     pps.sps_id = geread(r);     // pps_seq_parameter_set_id
+    pps.dependent_slice_segments_enabled_flag = r.get_bits(1);  // dependent_slice_segments_enabled_flag
+    r.get_bits(1);  // output_flag_present_flag
+    pps.num_extra_slice_header_bits = r.get_bits(3);  // num_extra_slice_header_bits
 
     pps.checksum          = calc_adler32(buffer->get_buffer(), buffer->get_size());
 
@@ -1000,7 +1022,7 @@ hevc::extract_par(uint8_t *&buffer,
 
         try {
           sps_info_t sps_info;
-          if (hevc::parse_sps(nalu, sps_info)) {
+          if (hevc::parse_sps(nalu, sps_info, new_hevcc.m_vps_info_list)) {
             ar_found = sps_info.ar_found;
             if (ar_found) {
               par_num = sps_info.par_num;
@@ -1399,7 +1421,7 @@ hevc::hevc_es_parser_c::handle_sps_nalu(memory_cptr &nalu) {
   sps_info_t sps_info;
 
   nalu_to_rbsp(nalu);
-  if (!parse_sps(nalu, sps_info, m_keep_ar_info))
+  if (!parse_sps(nalu, sps_info, m_vps_info_list, m_keep_ar_info))
     return;
   rbsp_to_nalu(nalu);
 
@@ -1576,6 +1598,7 @@ hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
                                          slice_info_t &si) {
   try {
     bit_cursor_c r(buffer->get_buffer(), buffer->get_size());
+    unsigned int i;
 
     memset(&si, 0, sizeof(si));
 
@@ -1588,6 +1611,61 @@ hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
         && (HEVC_NALU_TYPE_TRAIL_R != si.nalu_type)
         &&  (HEVC_NALU_TYPE_IDR_W_RADL != si.nalu_type))
       return false;
+
+    bool RapPicFlag = (si.nalu_type >= 16 && si.nalu_type <= 23); // RapPicFlag
+    bool first_slice_segment_in_pic_flag = r.get_bits(1); // first_slice_segment_in_pic_flag
+
+    if (RapPicFlag)
+      r.get_bits(1);  // no_output_of_prior_pics_flag
+
+    si.pps_id = geread(r);  // slice_pic_parameter_set_id
+
+    size_t pps_idx;
+    for (pps_idx = 0; m_pps_info_list.size() > pps_idx; ++pps_idx)
+      if (m_pps_info_list[pps_idx].id == si.pps_id)
+        break;
+    if (m_pps_info_list.size() == pps_idx) {
+      mxverb(3, boost::format("slice parser error: PPS not found: %1%\n") % si.pps_id);
+      return false;
+    }
+
+    pps_info_t &pps = m_pps_info_list[pps_idx];
+    size_t sps_idx;
+    for (sps_idx = 0; m_sps_info_list.size() > sps_idx; ++sps_idx)
+      if (m_sps_info_list[sps_idx].id == pps.sps_id)
+        break;
+    if (m_sps_info_list.size() == sps_idx)
+      return false;
+
+    si.sps = sps_idx;
+    si.pps = pps_idx;
+
+    sps_info_t &sps = m_sps_info_list[sps_idx];
+
+    bool dependent_slice_segment_flag = false;
+    if (!first_slice_segment_in_pic_flag) {
+      if (pps.dependent_slice_segments_enabled_flag)
+        dependent_slice_segment_flag = r.get_bits(1); // dependent_slice_segment_flag
+
+      bool Log2MinCbSizeY = sps.log2_min_luma_coding_block_size_minus3 + 3;
+      bool Log2CtbSizeY = Log2MinCbSizeY + sps.log2_diff_max_min_luma_coding_block_size;
+      bool CtbSizeY = 1 << Log2CtbSizeY;
+      bool PicWidthInCtbsY = ceil(sps.width / CtbSizeY);
+      bool PicHeightInCtbsY = ceil(sps.height / CtbSizeY);
+      bool PicSizeInCtbsY = PicWidthInCtbsY * PicHeightInCtbsY;
+
+      unsigned int v = ceil(int_log2(PicSizeInCtbsY));
+      r.get_bits(v);  // slice_segment_address
+    }
+
+    if (!dependent_slice_segment_flag) {
+      for (i = 0; i < pps.num_extra_slice_header_bits; i++)
+        r.get_bits(1);  // slice_reserved_undetermined_flag[i]
+
+      si.type = geread(r);  // slice_type
+
+      //WIP:HEVC TODO
+    }
 
     //WIP:HEVC TODO
     return true;

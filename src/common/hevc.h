@@ -88,6 +88,9 @@ namespace hevc{
 struct vps_info_t {
   unsigned int id;
 
+  unsigned int profile_idc;
+  unsigned int level_idc;
+
   uint32_t checksum;
 
   vps_info_t() {
@@ -113,10 +116,13 @@ struct short_term_ref_pic_set_t {
 
 struct sps_info_t {
   unsigned int id;
+  unsigned int vps_id;
 
   short_term_ref_pic_set_t short_term_ref_pic_sets[64];
 
   unsigned int chroma_format_idc;
+  unsigned int log2_min_luma_coding_block_size_minus3;
+  unsigned int log2_diff_max_min_luma_coding_block_size;
   unsigned int log2_max_frame_num;//WIP:HEVC equivalent?
   unsigned int pic_order_cnt_type;//WIP:HEVC equivalent?
   unsigned int log2_max_pic_order_cnt_lsb;//WIP:HEVC equivalent?
@@ -132,6 +138,8 @@ struct sps_info_t {
   unsigned int num_units_in_tick, time_scale;
 
   unsigned int width, height;
+
+  unsigned int vps;
 
   uint32_t checksum;
 
@@ -149,6 +157,8 @@ struct pps_info_t {
   unsigned id;
   unsigned sps_id;
 
+  bool dependent_slice_segments_enabled_flag;
+  unsigned int num_extra_slice_header_bits;
   bool pic_order_present;//WIP:HEVC equivalent?
 
   uint32_t checksum;
@@ -163,8 +173,8 @@ struct pps_info_t {
 struct slice_info_t {
   unsigned char nalu_type;
   unsigned char nal_ref_idc;//WIP:HEVC equivalent?
-  unsigned char type;//WIP:HEVC equivalent?
-  unsigned char pps_id;//WIP:HEVC equivalent?
+  unsigned char type;
+  unsigned char pps_id;
   unsigned int frame_num;//WIP:HEVC equivalent?
   bool field_pic_flag, bottom_field_flag;//WIP:HEVC equivalent?
   unsigned int idr_pic_id;//WIP:HEVC equivalent?
@@ -173,8 +183,8 @@ struct slice_info_t {
   unsigned int delta_pic_order_cnt[2];//WIP:HEVC equivalent?
   unsigned int first_mb_in_slice;//WIP:HEVC equivalent?
 
-  unsigned int sps;//WIP:HEVC equivalent?
-  unsigned int pps;//WIP:HEVC equivalent?
+  unsigned int sps;
+  unsigned int pps;
 
   slice_info_t() {
     clear();
@@ -190,7 +200,7 @@ void nalu_to_rbsp(memory_cptr &buffer);
 void rbsp_to_nalu(memory_cptr &buffer);
 
 bool parse_vps(memory_cptr &buffer, vps_info_t &vps);
-bool parse_sps(memory_cptr &buffer, sps_info_t &sps, bool keep_ar_info = false);
+bool parse_sps(memory_cptr &buffer, sps_info_t &sps, std::vector<vps_info_t> &m_vps_info_list, bool keep_ar_info = false);
 bool parse_pps(memory_cptr &buffer, pps_info_t &pps);
 
 bool extract_par(uint8_t *&buffer, size_t &buffer_size, uint32_t &par_num, uint32_t &par_den);
@@ -253,7 +263,7 @@ public:
 
 class hevcc_c {
 public:
-  unsigned int m_nalu_size_length;
+  unsigned int m_profile_idc, m_level_idc, m_nalu_size_length;
   std::vector<memory_cptr> m_vps_list, m_sps_list, m_pps_list;
   std::vector<vps_info_t> m_vps_info_list;
   std::vector<sps_info_t> m_sps_info_list;
