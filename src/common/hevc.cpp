@@ -1663,70 +1663,8 @@ hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
         r.get_bits(1);  // slice_reserved_undetermined_flag[i]
 
       si.type = geread(r);  // slice_type
-
-      //WIP:HEVC TODO
     }
-
-    //WIP:HEVC TODO
-    return true;
-    /*
-    si.first_mb_in_slice = geread(r); // first_mb_in_slice
-    si.type              = geread(r); // slice_type
-
-    ++m_stats.num_slices_by_type[9 < si.type ? 10 : si.type];
-
-    if (9 < si.type) {
-      mxverb(3, boost::format("slice parser error: 9 < si.type: %1%\n") % si.type);
-      return false;
-    }
-
-    si.pps_id = geread(r);      // pps_id
-
-    size_t pps_idx;
-    for (pps_idx = 0; m_pps_info_list.size() > pps_idx; ++pps_idx)
-      if (m_pps_info_list[pps_idx].id == si.pps_id)
-        break;
-    if (m_pps_info_list.size() == pps_idx) {
-      mxverb(3, boost::format("slice parser error: PPS not found: %1%\n") % si.pps_id);
-      return false;
-    }
-
-    pps_info_t &pps = m_pps_info_list[pps_idx];
-    size_t sps_idx;
-    for (sps_idx = 0; m_sps_info_list.size() > sps_idx; ++sps_idx)
-      if (m_sps_info_list[sps_idx].id == pps.sps_id)
-        break;
-    if (m_sps_info_list.size() == sps_idx)
-      return false;
-
-    si.sps = sps_idx;
-    si.pps = pps_idx;
-
-    sps_info_t &sps = m_sps_info_list[sps_idx];
-
-    si.frame_num = r.get_bits(sps.log2_max_frame_num);
-
-    if (!sps.frame_mbs_only) {
-      si.field_pic_flag = r.get_bit();
-      if (si.field_pic_flag)
-        si.bottom_field_flag = r.get_bit();
-    }
-
-    if (HEVC_NALU_TYPE_IDR_W_RADL == si.nalu_type)
-      si.idr_pic_id = geread(r);
-
-    if (0 == sps.pic_order_cnt_type) {
-      si.pic_order_cnt_lsb = r.get_bits(sps.log2_max_pic_order_cnt_lsb);
-      if (pps.pic_order_present && !si.field_pic_flag)
-        si.delta_pic_order_cnt_bottom = sgeread(r);
-    }
-
-    if ((1 == sps.pic_order_cnt_type) && !sps.delta_pic_order_always_zero_flag) {
-      si.delta_pic_order_cnt[0] = sgeread(r);
-      if (pps.pic_order_present && !si.field_pic_flag)
-        si.delta_pic_order_cnt[1] = sgeread(r);
-    }*/
-
+   
     return true;
   } catch (...) {
     return false;
