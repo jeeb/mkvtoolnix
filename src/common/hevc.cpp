@@ -1267,44 +1267,6 @@ hevc::hevc_es_parser_c::write_nalu_size(unsigned char *buffer,
     buffer[i] = (size >> (8 * (nalu_size_length - 1 - i))) & 0xff;
 }
 
-bool
-hevc::hevc_es_parser_c::flush_decision(slice_info_t &si,
-                                            slice_info_t &ref) {
-
-  if (HEVC_NALU_TYPE_IDR_W_RADL == si.nalu_type) {
-    if (0 != si.first_mb_in_slice)
-      return false;
-
-    if ((HEVC_NALU_TYPE_IDR_W_RADL == ref.nalu_type) && (si.idr_pic_id != ref.idr_pic_id))
-      return true;
-
-    if (HEVC_NALU_TYPE_IDR_W_RADL != ref.nalu_type)
-      return true;
-  }
-
-  if (si.frame_num != ref.frame_num)
-    return true;
-  if (si.field_pic_flag != ref.field_pic_flag)
-    return true;
-  if ((si.nal_ref_idc != ref.nal_ref_idc) && (!si.nal_ref_idc || !ref.nal_ref_idc))
-    return true;
-
-  if (m_sps_info_list[si.sps].pic_order_cnt_type == m_sps_info_list[ref.sps].pic_order_cnt_type) {
-    if (!m_sps_info_list[ref.sps].pic_order_cnt_type) {
-      if (si.pic_order_cnt_lsb != ref.pic_order_cnt_lsb)
-        return true;
-      if (si.delta_pic_order_cnt_bottom != ref.delta_pic_order_cnt_bottom)
-        return true;
-
-    } else if ((1 == m_sps_info_list[ref.sps].pic_order_cnt_type)
-               && (   (si.delta_pic_order_cnt[0] != ref.delta_pic_order_cnt[0])
-                   || (si.delta_pic_order_cnt[1] != ref.delta_pic_order_cnt[1])))
-      return true;
-  }
-
-  return false;
-}
-
 void
 hevc::hevc_es_parser_c::flush_incomplete_frame() {
   if (!m_have_incomplete_frame || !m_hevcc_ready)
@@ -1338,7 +1300,7 @@ hevc::hevc_es_parser_c::handle_slice_nalu(memory_cptr &nalu) {
   if (!parse_slice(nalu, si))
     return;
 
-  if (m_have_incomplete_frame && flush_decision(si, m_incomplete_frame.m_si))
+  if (m_have_incomplete_frame && si.first_slice_segment_in_pic_flag)
     flush_incomplete_frame();
 
   if (m_have_incomplete_frame) {
@@ -1618,7 +1580,7 @@ hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
       return false;
 
     bool RapPicFlag = (si.nalu_type >= 16 && si.nalu_type <= 23); // RapPicFlag
-    bool first_slice_segment_in_pic_flag = r.get_bits(1); // first_slice_segment_in_pic_flag
+    si.first_slice_segment_in_pic_flag = r.get_bits(1); // first_slice_segment_in_pic_flag
 
     if (RapPicFlag)
       r.get_bits(1);  // no_output_of_prior_pics_flag
@@ -1648,7 +1610,7 @@ hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
     sps_info_t &sps = m_sps_info_list[sps_idx];
 
     bool dependent_slice_segment_flag = false;
-    if (!first_slice_segment_in_pic_flag) {
+    if (!si.first_slice_segment_in_pic_flag) {
       if (pps.dependent_slice_segments_enabled_flag)
         dependent_slice_segment_flag = r.get_bits(1); // dependent_slice_segment_flag
 

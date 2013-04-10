@@ -197,6 +197,7 @@ struct slice_info_t {
   unsigned char type;
   unsigned char pps_id;
   unsigned int frame_num;//WIP:HEVC equivalent?
+  bool first_slice_segment_in_pic_flag;
   bool field_pic_flag, bottom_field_flag;//WIP:HEVC equivalent?
   unsigned int idr_pic_id;//WIP:HEVC equivalent?
   unsigned int pic_order_cnt_lsb;//WIP:HEVC equivalent?
@@ -466,7 +467,6 @@ protected:
   void handle_sei_nalu(memory_cptr &nalu);
   void handle_slice_nalu(memory_cptr &nalu);
   void cleanup();
-  bool flush_decision(slice_info_t &si, slice_info_t &ref);
   void flush_incomplete_frame();
   void flush_unhandled_nalus();
   void write_nalu_size(unsigned char *buffer, size_t size, int this_nalu_size_length = -1) const;
