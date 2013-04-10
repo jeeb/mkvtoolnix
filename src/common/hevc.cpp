@@ -686,28 +686,18 @@ hevc::slice_info_t::dump()
                        "  nal_ref_idc:                %2%\n"
                        "  type:                       %3%\n"
                        "  pps_id:                     %4%\n"
-                       "  frame_num:                  %5%\n"
-                       "  field_pic_flag:             %6%\n"
-                       "  bottom_field_flag:          %7%\n"
-                       "  idr_pic_id:                 %8%\n"
-                       "  pic_order_cnt_lsb:          %9%\n"
-                       "  delta_pic_order_cnt_bottom: %10%\n"
-                       "  delta_pic_order_cnt:        %11%\n"
-                       "  first_mb_in_slice:          %12%\n"
-                       "  sps:                        %13%\n"
-                       "  pps:                        %14%\n")
+                       "  field_pic_flag:             %5%\n"
+                       "  bottom_field_flag:          %6%\n"
+                       "  pic_order_cnt_lsb:          %7%\n"
+                       "  sps:                        %8%\n"
+                       "  pps:                        %9%\n")
          % static_cast<unsigned int>(nalu_type)
          % static_cast<unsigned int>(nal_ref_idc)
          % static_cast<unsigned int>(type)
          % static_cast<unsigned int>(pps_id)
-         % frame_num
          % field_pic_flag
          % bottom_field_flag
-         % idr_pic_id
          % pic_order_cnt_lsb
-         % delta_pic_order_cnt_bottom
-         % (delta_pic_order_cnt[0] << 8 | delta_pic_order_cnt[1])
-         % first_mb_in_slice
          % sps
          % pps);
 }

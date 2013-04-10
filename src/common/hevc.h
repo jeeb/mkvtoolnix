@@ -196,14 +196,9 @@ struct slice_info_t {
   unsigned char nal_ref_idc;//WIP:HEVC equivalent?
   unsigned char type;
   unsigned char pps_id;
-  unsigned int frame_num;//WIP:HEVC equivalent?
   bool first_slice_segment_in_pic_flag;
   bool field_pic_flag, bottom_field_flag;//WIP:HEVC equivalent?
-  unsigned int idr_pic_id;//WIP:HEVC equivalent?
   unsigned int pic_order_cnt_lsb;//WIP:HEVC equivalent?
-  unsigned int delta_pic_order_cnt_bottom;//WIP:HEVC equivalent?
-  unsigned int delta_pic_order_cnt[2];//WIP:HEVC equivalent?
-  unsigned int first_mb_in_slice;//WIP:HEVC equivalent?
 
   unsigned int sps;
   unsigned int pps;
