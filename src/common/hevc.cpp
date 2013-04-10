@@ -618,20 +618,18 @@ void
 hevc::sps_info_t::dump() {
   mxinfo(boost::format("sps_info dump:\n"
                        "  id:                                    %1%\n"
-                       "  pic_order_cnt_type:                    %2%\n"
-                       "  log2_max_pic_order_cnt_lsb:            %3%\n"
-                       "  vui_present:                           %4%\n"
-                       "  ar_found:                              %5%\n"
-                       "  par_num:                               %6%\n"
-                       "  par_den:                               %7%\n"
-                       "  timing_info_present:                   %8%\n"
-                       "  num_units_in_tick:                     %9%\n"
-                       "  time_scale:                            %10%\n"
-                       "  width:                                 %11%\n"
-                       "  height:                                %12%\n"
-                       "  checksum:                              %|13$08x|\n")
+                       "  log2_max_pic_order_cnt_lsb:            %2%\n"
+                       "  vui_present:                           %3%\n"
+                       "  ar_found:                              %4%\n"
+                       "  par_num:                               %5%\n"
+                       "  par_den:                               %6%\n"
+                       "  timing_info_present:                   %7%\n"
+                       "  num_units_in_tick:                     %8%\n"
+                       "  time_scale:                            %9%\n"
+                       "  width:                                 %10%\n"
+                       "  height:                                %11%\n"
+                       "  checksum:                              %|12$08x|\n")
          % id
-         % pic_order_cnt_type
          % log2_max_pic_order_cnt_lsb
          % vui_present
          % ar_found
@@ -675,16 +673,14 @@ hevc::slice_info_t::dump()
   const {
   mxinfo(boost::format("slice_info dump:\n"
                        "  nalu_type:                  %1%\n"
-                       "  nal_ref_idc:                %2%\n"
-                       "  type:                       %3%\n"
-                       "  pps_id:                     %4%\n"
-                       "  field_pic_flag:             %5%\n"
-                       "  bottom_field_flag:          %6%\n"
-                       "  pic_order_cnt_lsb:          %7%\n"
-                       "  sps:                        %8%\n"
-                       "  pps:                        %9%\n")
+                       "  type:                       %2%\n"
+                       "  pps_id:                     %3%\n"
+                       "  field_pic_flag:             %4%\n"
+                       "  bottom_field_flag:          %5%\n"
+                       "  pic_order_cnt_lsb:          %6%\n"
+                       "  sps:                        %7%\n"
+                       "  pps:                        %8%\n")
          % static_cast<unsigned int>(nalu_type)
-         % static_cast<unsigned int>(nal_ref_idc)
          % static_cast<unsigned int>(type)
          % static_cast<unsigned int>(pps_id)
          % field_pic_flag
@@ -1703,20 +1699,9 @@ hevc::hevc_es_parser_c::cleanup() {
   sps_info_t &sps           = m_sps_info_list[idr.sps];
   bool simple_picture_order = false;
 
-  if (   (   (HEVC_SLICE_TYPE_I   != idr.type)
-          && (HEVC_SLICE_TYPE_SI  != idr.type)
-          && (HEVC_SLICE_TYPE2_I  != idr.type)
-          && (HEVC_SLICE_TYPE2_SI != idr.type))
-      || (0 == idr.nal_ref_idc)
-      || (0 != sps.pic_order_cnt_type)) {
-    simple_picture_order = true;
-    // return;
-  }
-
   unsigned int idx                    = 0;
   unsigned int prev_pic_order_cnt_msb = 0;
   unsigned int prev_pic_order_cnt_lsb = 0;
-  unsigned int pic_order_cnt_msb      = 0;
 
   while (frames_end != frame_itr) {
     slice_info_t &si = frame_itr->m_si;
@@ -1726,28 +1711,32 @@ hevc::hevc_es_parser_c::cleanup() {
       break;
     }
 
-    if (frames_begin == frame_itr)
-      ;
+    if (HEVC_NALU_TYPE_IDR_W_RADL == idr.type) {
+      prev_pic_order_cnt_lsb = prev_pic_order_cnt_msb = 0;
+    } else {
+      unsigned int poc_msb;
+      unsigned int max_poc_lsb = 1 << (sps.log2_max_pic_order_cnt_lsb);
+      unsigned int poc_lsb = si.pic_order_cnt_lsb;
 
-    else if ((si.pic_order_cnt_lsb < prev_pic_order_cnt_lsb) && ((prev_pic_order_cnt_lsb - si.pic_order_cnt_lsb) >= (1u << (sps.log2_max_pic_order_cnt_lsb - 1))))
-      pic_order_cnt_msb = prev_pic_order_cnt_msb + (1 << sps.log2_max_pic_order_cnt_lsb);
+      if (poc_lsb < prev_pic_order_cnt_lsb && (prev_pic_order_cnt_lsb - poc_lsb) >= (max_poc_lsb / 2))
+          poc_msb = prev_pic_order_cnt_msb + max_poc_lsb;
+      else if (poc_lsb > prev_pic_order_cnt_lsb && (poc_lsb - prev_pic_order_cnt_lsb) > (max_poc_lsb / 2))
+          poc_msb = prev_pic_order_cnt_msb - max_poc_lsb;
+      else 
+          poc_msb = prev_pic_order_cnt_msb;
 
-    else if ((si.pic_order_cnt_lsb > prev_pic_order_cnt_lsb) && ((si.pic_order_cnt_lsb - prev_pic_order_cnt_lsb) > (1u << (sps.log2_max_pic_order_cnt_lsb - 1))))
-      pic_order_cnt_msb = prev_pic_order_cnt_msb - (1 << sps.log2_max_pic_order_cnt_lsb);
+      frame_itr->m_presentation_order = poc_lsb + poc_msb;
 
-    else
-      pic_order_cnt_msb = prev_pic_order_cnt_msb;
+      if (si.type != HEVC_SLICE_TYPE_B) {  // is this accurate?
+          prev_pic_order_cnt_lsb = poc_lsb;
+          prev_pic_order_cnt_msb = poc_msb;
+      }
+    }
 
-    frame_itr->m_presentation_order = pic_order_cnt_msb + si.pic_order_cnt_lsb;
     frame_itr->m_decode_order       = idx;
 
     ++frame_itr;
     ++idx;
-
-    if (0 != si.nal_ref_idc) {
-      prev_pic_order_cnt_lsb = si.pic_order_cnt_lsb;
-      prev_pic_order_cnt_msb = pic_order_cnt_msb;
-    }
   }
 
   if (!simple_picture_order)

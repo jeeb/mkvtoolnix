@@ -93,13 +93,6 @@
 #define HEVC_SLICE_TYPE_P   0
 #define HEVC_SLICE_TYPE_B   1
 #define HEVC_SLICE_TYPE_I   2
-#define HEVC_SLICE_TYPE_SP  3
-#define HEVC_SLICE_TYPE_SI  4
-#define HEVC_SLICE_TYPE2_P  5
-#define HEVC_SLICE_TYPE2_B  6
-#define HEVC_SLICE_TYPE2_I  7
-#define HEVC_SLICE_TYPE2_SP 8
-#define HEVC_SLICE_TYPE2_SI 9
 
 #define HEVC_EXTENDED_SAR        0xff
 #define HEVC_NUM_PREDEFINED_PARS   17
@@ -144,7 +137,6 @@ struct sps_info_t {
   unsigned int chroma_format_idc;
   unsigned int log2_min_luma_coding_block_size_minus3;
   unsigned int log2_diff_max_min_luma_coding_block_size;
-  unsigned int pic_order_cnt_type;//WIP:HEVC equivalent?
   unsigned int log2_max_pic_order_cnt_lsb;
 
   // vui:
@@ -189,12 +181,11 @@ struct pps_info_t {
 
 struct slice_info_t {
   unsigned char nalu_type;
-  unsigned char nal_ref_idc;//WIP:HEVC equivalent?
   unsigned char type;
   unsigned char pps_id;
   bool first_slice_segment_in_pic_flag;
   bool field_pic_flag, bottom_field_flag;//WIP:HEVC equivalent?
-  unsigned int pic_order_cnt_lsb;//WIP:HEVC equivalent?
+  unsigned int pic_order_cnt_lsb;
 
   unsigned int sps;
   unsigned int pps;
