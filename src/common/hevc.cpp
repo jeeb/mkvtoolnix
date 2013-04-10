@@ -1708,6 +1708,7 @@ hevc::hevc_es_parser_c::cleanup() {
     }
 
     if (HEVC_NALU_TYPE_IDR_W_RADL == idr.type) {
+      frame_itr->m_presentation_order = 0;
       prev_pic_order_cnt_lsb = prev_pic_order_cnt_msb = 0;
     } else {
       unsigned int poc_msb;
