@@ -67,6 +67,7 @@
 # include "output/p_flac.h"
 #endif
 #include "output/p_hevc.h"
+#include "output/p_hevc_es.h"
 #include "output/p_kate.h"
 #include "output/p_mp3.h"
 #include "output/p_mpeg1_2.h"
@@ -1486,8 +1487,25 @@ kax_reader_c::create_flac_audio_packetizer(kax_track_t *t,
 #endif  // HAVE_FLAC_FORMAT_H
 
 void
+kax_reader_c::create_hevc_es_video_packetizer(kax_track_t *t,
+                                              track_info_c &nti) {
+  hevc_es_video_packetizer_c *ptzr = new hevc_es_video_packetizer_c(this, nti);
+  set_track_packetizer(t, ptzr);
+
+  ptzr->set_video_pixel_dimensions(t->v_width, t->v_height);
+
+  show_packetizer_info(t->tnum, t->ptzr_ptr);
+}
+
+void
 kax_reader_c::create_hevc_video_packetizer(kax_track_t *t,
                                            track_info_c &nti) {
+  if ((0 == nti.m_private_size) || !nti.m_private_data) {
+    // avc_es_parser_cptr parser = parse_first_hevc_frame(t, nti);
+    create_hevc_es_video_packetizer(t, nti);
+    return;
+  }
+
   set_track_packetizer(t, new hevc_video_packetizer_c(this, nti, t->v_frate, t->v_width, t->v_height));
   show_packetizer_info(t->tnum, t->ptzr_ptr);
 }
