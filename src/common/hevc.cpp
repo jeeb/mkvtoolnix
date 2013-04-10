@@ -618,27 +618,21 @@ void
 hevc::sps_info_t::dump() {
   mxinfo(boost::format("sps_info dump:\n"
                        "  id:                                    %1%\n"
-                       "  log2_max_frame_num:                    %2%\n"
-                       "  pic_order_cnt_type:                    %3%\n"
-                       "  log2_max_pic_order_cnt_lsb:            %4%\n"
-                       "  delta_pic_order_always_zero_flag:      %5%\n"
-                       "  frame_mbs_only:                        %6%\n"
-                       "  vui_present:                           %7%\n"
-                       "  ar_found:                              %8%\n"
-                       "  par_num:                               %9%\n"
-                       "  par_den:                               %10%\n"
-                       "  timing_info_present:                   %11%\n"
-                       "  num_units_in_tick:                     %12%\n"
-                       "  time_scale:                            %13%\n"
-                       "  width:                                 %14%\n"
-                       "  height:                                %15%\n"
-                       "  checksum:                              %|16$08x|\n")
+                       "  pic_order_cnt_type:                    %2%\n"
+                       "  log2_max_pic_order_cnt_lsb:            %3%\n"
+                       "  vui_present:                           %4%\n"
+                       "  ar_found:                              %5%\n"
+                       "  par_num:                               %6%\n"
+                       "  par_den:                               %7%\n"
+                       "  timing_info_present:                   %8%\n"
+                       "  num_units_in_tick:                     %9%\n"
+                       "  time_scale:                            %10%\n"
+                       "  width:                                 %11%\n"
+                       "  height:                                %12%\n"
+                       "  checksum:                              %|13$08x|\n")
          % id
-         % log2_max_frame_num
          % pic_order_cnt_type
          % log2_max_pic_order_cnt_lsb
-         % delta_pic_order_always_zero_flag
-         % frame_mbs_only
          % vui_present
          % ar_found
          % par_num
@@ -879,7 +873,7 @@ hevc::parse_sps(memory_cptr &buffer,
   
   gecopy(r, w); // bit_depth_luma_minus8
   gecopy(r, w); // bit_depth_chroma_minus8
-  unsigned int log2_max_pic_order_cnt_lsb_minus4 = gecopy(r, w); // log2_max_pic_order_cnt_lsb_minus4
+  sps.log2_max_pic_order_cnt_lsb = gecopy(r, w) + 4; // log2_max_pic_order_cnt_lsb_minus4
 
   bool sps_sub_layer_ordering_info_present_flag = w.copy_bits(1, r);  // sps_sub_layer_ordering_info_present_flag
   for (i = (sps_sub_layer_ordering_info_present_flag ? 
@@ -920,7 +914,7 @@ hevc::parse_sps(memory_cptr &buffer,
   if (w.copy_bits(1, r) == 1) { // long_term_ref_pics_present_flag
     unsigned int num_long_term_ref_pic_sets = gecopy(r, w); // num_long_term_ref_pic_sets
     for (i = 0; i < num_long_term_ref_pic_sets; i++) {
-      w.copy_bits(log2_max_pic_order_cnt_lsb_minus4 + 4, r);  // lt_ref_pic_poc_lsb_sps[i]
+      w.copy_bits(sps.log2_max_pic_order_cnt_lsb, r);  // lt_ref_pic_poc_lsb_sps[i]
       w.copy_bits(1, r);  // used_by_curr_pic_lt_sps_flag[i]
     }
   }

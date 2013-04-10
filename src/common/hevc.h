@@ -144,11 +144,8 @@ struct sps_info_t {
   unsigned int chroma_format_idc;
   unsigned int log2_min_luma_coding_block_size_minus3;
   unsigned int log2_diff_max_min_luma_coding_block_size;
-  unsigned int log2_max_frame_num;//WIP:HEVC equivalent?
   unsigned int pic_order_cnt_type;//WIP:HEVC equivalent?
-  unsigned int log2_max_pic_order_cnt_lsb;//WIP:HEVC equivalent?
-  bool delta_pic_order_always_zero_flag;//WIP:HEVC equivalent?
-  bool frame_mbs_only;//WIP:HEVC equivalent?
+  unsigned int log2_max_pic_order_cnt_lsb;
 
   // vui:
   bool vui_present, ar_found;
