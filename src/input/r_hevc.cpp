@@ -26,7 +26,7 @@
 #include "common/memory.h"
 #include "input/r_hevc.h"
 #include "merge/output_control.h"
-#include "output/p_hevc.h"
+#include "output/p_hevc_es.h"
 
 
 #define PROBESIZE 4

@@ -1344,7 +1344,7 @@ kax_reader_c::create_video_packetizer(kax_track_t *t,
       create_mpeg4_p10_video_packetizer(t, nti);
 
     else if (t->codec_id == MKV_V_MPEG4_HEVC)
-      create_hevc_es_video_packetizer(t, nti);
+      create_hevc_video_packetizer(t, nti);
 
     else if (t->codec_id == MKV_V_THEORA) {
       set_track_packetizer(t, new theora_video_packetizer_c(this, nti, t->v_frate, t->v_width, t->v_height));
@@ -1486,13 +1486,9 @@ kax_reader_c::create_flac_audio_packetizer(kax_track_t *t,
 #endif  // HAVE_FLAC_FORMAT_H
 
 void
-kax_reader_c::create_hevc_es_video_packetizer(kax_track_t *t,
+kax_reader_c::create_hevc_video_packetizer(kax_track_t *t,
                                            track_info_c &nti) {
-  hevc_es_video_packetizer_c *ptzr = new hevc_es_video_packetizer_c(this, nti);
-  set_track_packetizer(t, ptzr);
-
-  ptzr->set_video_pixel_dimensions(t->v_width, t->v_height);
-
+  set_track_packetizer(t, new hevc_video_packetizer_c(this, nti, t->v_frate, t->v_width, t->v_height));
   show_packetizer_info(t->tnum, t->ptzr_ptr);
 }
 
