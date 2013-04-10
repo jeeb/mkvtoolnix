@@ -184,7 +184,6 @@ struct slice_info_t {
   unsigned char type;
   unsigned char pps_id;
   bool first_slice_segment_in_pic_flag;
-  bool field_pic_flag, bottom_field_flag;//WIP:HEVC equivalent?
   unsigned int pic_order_cnt_lsb;
 
   unsigned int sps;

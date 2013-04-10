@@ -675,16 +675,12 @@ hevc::slice_info_t::dump()
                        "  nalu_type:                  %1%\n"
                        "  type:                       %2%\n"
                        "  pps_id:                     %3%\n"
-                       "  field_pic_flag:             %4%\n"
-                       "  bottom_field_flag:          %5%\n"
-                       "  pic_order_cnt_lsb:          %6%\n"
-                       "  sps:                        %7%\n"
-                       "  pps:                        %8%\n")
+                       "  pic_order_cnt_lsb:          %4%\n"
+                       "  sps:                        %5%\n"
+                       "  pps:                        %6%\n")
          % static_cast<unsigned int>(nalu_type)
          % static_cast<unsigned int>(type)
          % static_cast<unsigned int>(pps_id)
-         % field_pic_flag
-         % bottom_field_flag
          % pic_order_cnt_lsb
          % sps
          % pps);
@@ -1626,7 +1622,7 @@ hevc::hevc_es_parser_c::duration_for(slice_info_t const &si)
                    : -1 != m_stream_default_duration                                                  ? m_stream_default_duration
                    : -1 != m_container_default_duration                                               ? m_container_default_duration
                    :                                                                                    20000000;
-  return duration * (si.field_pic_flag ? 1 : 2);
+  return duration;
 }
 
 int64_t
@@ -1790,10 +1786,7 @@ hevc::hevc_es_parser_c::cleanup() {
     previous_frame_itr = frame_itr;
     m_duration_frequency[frame_itr->m_end - frame_itr->m_start]++;
 
-    if (frame_itr->m_si.field_pic_flag)
-      ++m_stats.num_field_slices;
-    else
-      ++m_stats.num_field_slices;
+    ++m_stats.num_field_slices;
   }
 
   m_stats.num_frames_out += m_frames.size();
