@@ -664,11 +664,9 @@ hevc::pps_info_t::dump() {
   mxinfo(boost::format("pps_info dump:\n"
                        "id: %1%\n"
                        "sps_id: %2%\n"
-                       "pic_order_present: %3%\n"
-                       "checksum: %|4$08x|\n")
+                       "checksum: %|3$08x|\n")
          % id
          % sps_id
-         % pic_order_present
          % checksum);
 }
 

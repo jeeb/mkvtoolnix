@@ -177,7 +177,6 @@ struct pps_info_t {
 
   bool dependent_slice_segments_enabled_flag;
   unsigned int num_extra_slice_header_bits;
-  bool pic_order_present;//WIP:HEVC equivalent?
 
   uint32_t checksum;
 
