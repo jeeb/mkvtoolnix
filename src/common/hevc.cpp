@@ -285,9 +285,9 @@ sgecopy(bit_cursor_c &r,
 
 static void
 profile_tier_copy(bit_cursor_c &r,
-        bit_writer_c &w,
-        hevc::vps_info_t &vps,
-        unsigned int maxNumSubLayersMinus1) {
+                  bit_writer_c &w,
+                  hevc::vps_info_t &vps,
+                  unsigned int maxNumSubLayersMinus1) {
   unsigned int i;
   std::vector<bool> sub_layer_profile_present_flag, sub_layer_level_present_flag;
 
@@ -322,9 +322,9 @@ profile_tier_copy(bit_cursor_c &r,
 
 static void
 sub_layer_hrd_parameters_copy(bit_cursor_c &r,
-        bit_writer_c &w,
-        unsigned int CpbCnt,
-        bool sub_pic_cpb_params_present_flag) {
+                              bit_writer_c &w,
+                              unsigned int CpbCnt,
+                              bool sub_pic_cpb_params_present_flag) {
   unsigned int i;
 
   for (i = 0; i <= CpbCnt; i++) {
@@ -342,9 +342,9 @@ sub_layer_hrd_parameters_copy(bit_cursor_c &r,
 
 static void
 hrd_parameters_copy(bit_cursor_c &r,
-        bit_writer_c &w,
-        bool commonInfPresentFlag,
-        unsigned int maxNumSubLayersMinus1) {
+                    bit_writer_c &w,
+                    bool commonInfPresentFlag,
+                    unsigned int maxNumSubLayersMinus1) {
   unsigned int i;
 
   bool nal_hrd_parameters_present_flag = false;
@@ -359,10 +359,10 @@ hrd_parameters_copy(bit_cursor_c &r,
     if (nal_hrd_parameters_present_flag || vcl_hrd_parameters_present_flag) {
       sub_pic_cpb_params_present_flag = w.copy_bits(1, r); // sub_pic_cpb_params_present_flag
       if (sub_pic_cpb_params_present_flag) {
-          w.copy_bits(8, r);  // tick_divisor_minus2
-          w.copy_bits(5, r);  // du_cpb_removal_delay_increment_length_minus1
-          w.copy_bits(1, r);  // sub_pic_cpb_params_in_pic_timing_sei_flag
-          w.copy_bits(5, r);  // dpb_output_delay_du_length_minus1
+        w.copy_bits(8, r);  // tick_divisor_minus2
+        w.copy_bits(5, r);  // du_cpb_removal_delay_increment_length_minus1
+        w.copy_bits(1, r);  // sub_pic_cpb_params_in_pic_timing_sei_flag
+        w.copy_bits(5, r);  // dpb_output_delay_du_length_minus1
       }
 
       w.copy_bits(4+4, r);  // bit_rate_scale, cpb_size_scale
@@ -386,9 +386,9 @@ hrd_parameters_copy(bit_cursor_c &r,
       fixed_pic_rate_within_cvs_flag = w.copy_bits(1, r); // fixed_pic_rate_within_cvs_flag[i]
 
     if (fixed_pic_rate_within_cvs_flag)
-        gecopy(r, w);                                     // elemental_duration_in_tc_minus1[i]
-      else
-        low_delay_hrd_flag = w.copy_bits(1, r);           // low_delay_hrd_flag[i]
+      gecopy(r, w);                                       // elemental_duration_in_tc_minus1[i]
+    else
+      low_delay_hrd_flag = w.copy_bits(1, r);             // low_delay_hrd_flag[i]
 
     if (!low_delay_hrd_flag)
       CpbCnt = gecopy(r, w);                              // cpb_cnt_minus1[i]
@@ -403,7 +403,7 @@ hrd_parameters_copy(bit_cursor_c &r,
 
 static void 
 scaling_list_data_copy(bit_cursor_c &r,
-       bit_writer_c &w) {
+                       bit_writer_c &w) {
   unsigned int i;
   unsigned int sizeId;
   for (sizeId = 0; sizeId < 4; sizeId++) {
@@ -428,10 +428,10 @@ scaling_list_data_copy(bit_cursor_c &r,
 
 static void
 short_term_ref_pic_set_copy(bit_cursor_c &r,
-       bit_writer_c &w,
-       hevc::short_term_ref_pic_set_t *short_term_ref_pic_sets,
-       unsigned int idxRps,
-       unsigned int num_short_term_ref_pic_sets) {
+                            bit_writer_c &w,
+                            hevc::short_term_ref_pic_set_t *short_term_ref_pic_sets,
+                            unsigned int idxRps,
+                            unsigned int num_short_term_ref_pic_sets) {
   hevc::short_term_ref_pic_set_t* ref_st_rp_set;
   hevc::short_term_ref_pic_set_t* cur_st_rp_set = short_term_ref_pic_sets + idxRps;
   unsigned int inter_rps_pred_flag = cur_st_rp_set->inter_ref_pic_set_prediction_flag = 0;
@@ -544,10 +544,10 @@ short_term_ref_pic_set_copy(bit_cursor_c &r,
 
 static void
 vui_parameters_copy(bit_cursor_c &r,
-       bit_writer_c &w,
-       hevc::sps_info_t &sps,
-       bool keep_ar_info,
-       unsigned int max_sub_layers_minus1) {
+                    bit_writer_c &w,
+                    hevc::sps_info_t &sps,
+                    bool keep_ar_info,
+                    unsigned int max_sub_layers_minus1) {
   if (r.get_bit() == 1) {                   // aspect_ratio_info_present_flag
     unsigned int ar_type = r.get_bits(8);   // aspect_ratio_idc
 
@@ -913,7 +913,7 @@ hevc::parse_sps(memory_cptr &buffer,
   w.copy_bits(1, r);  // strong_intra_smoothing_enabled_flag
 
   sps.vui_present = w.copy_bits(1, r); // vui_parameters_present_flag
-  if(sps.vui_present == 1) {
+  if (sps.vui_present == 1) {
     vui_parameters_copy(r, w, sps, keep_ar_info, max_sub_layers_minus1);  //vui_parameters()
   }
 
@@ -978,9 +978,9 @@ hevc::parse_pps(memory_cptr &buffer,
 */
 bool
 hevc::extract_par(uint8_t *&buffer,
-                        size_t &buffer_size,
-                        uint32_t &par_num,
-                        uint32_t &par_den) {
+                  size_t &buffer_size,
+                  uint32_t &par_num,
+                  uint32_t &par_den) {
   try {
     auto hevcc     = hevcc_c::unpack(memory_cptr{new memory_c{buffer, buffer_size, false}});
     auto new_hevcc = hevcc;
