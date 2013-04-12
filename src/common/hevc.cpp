@@ -40,9 +40,9 @@ hevcc_c::hevcc_c()
 }
 
 hevcc_c::hevcc_c(unsigned int nalu_size_length,
-               std::vector<memory_cptr> const &vps_list,
-               std::vector<memory_cptr> const &sps_list,
-               std::vector<memory_cptr> const &pps_list)
+                 std::vector<memory_cptr> const &vps_list,
+                 std::vector<memory_cptr> const &sps_list,
+                 std::vector<memory_cptr> const &pps_list)
   : m_profile_idc{}
   , m_level_idc{}
   , m_nalu_size_length{nalu_size_length}
@@ -351,8 +351,7 @@ hrd_parameters_copy(bit_cursor_c &r,
   bool vcl_hrd_parameters_present_flag = false;
   bool sub_pic_cpb_params_present_flag = false;
 
-  if (commonInfPresentFlag)
-  {
+  if (commonInfPresentFlag) {
     nal_hrd_parameters_present_flag = w.copy_bits(1, r); // nal_hrd_parameters_present_flag
     vcl_hrd_parameters_present_flag = w.copy_bits(1, r); // vcl_hrd_parameters_present_flag
 
@@ -487,8 +486,7 @@ short_term_ref_pic_set_copy(bit_cursor_c &r,
     cur_st_rp_set->num_positive_pics = k1;
 
     // Sort in increasing order (smallest first)
-    for (i = 1; i < cur_st_rp_set->num_pics; i++ )
-    { 
+    for (i = 1; i < cur_st_rp_set->num_pics; i++ ) { 
       int delta_POC = cur_st_rp_set->delta_poc[i];
       int used = cur_st_rp_set->used[i];
       for (k = i - 1; k >= 0; k--) {
@@ -512,9 +510,7 @@ short_term_ref_pic_set_copy(bit_cursor_c &r,
       cur_st_rp_set->delta_poc[k] = delta_POC;
       cur_st_rp_set->used[k] = used;
     }
-  }
-  else
-  {
+  } else {
     int prev = 0;
     int poc;
     int i;
@@ -733,7 +729,7 @@ hevc::rbsp_to_nalu(memory_cptr &buffer) {
 
 bool 
 hevc::parse_vps(memory_cptr &buffer,
-                      vps_info_t &vps) {
+                vps_info_t &vps) {
   int size              = buffer->get_size();
   unsigned char *newsps = (unsigned char *)safemalloc(size + 100);
   memory_cptr mcptr_newsps(new memory_c(newsps, size, true));
@@ -805,9 +801,9 @@ hevc::parse_vps(memory_cptr &buffer,
 
 bool
 hevc::parse_sps(memory_cptr &buffer,
-                      sps_info_t &sps,
-                      std::vector<vps_info_t> &m_vps_info_list,
-                      bool keep_ar_info) {
+                sps_info_t &sps,
+                std::vector<vps_info_t> &m_vps_info_list,
+                bool keep_ar_info) {
   int size              = buffer->get_size();
   unsigned char *newsps = (unsigned char *)safemalloc(size + 100);
   memory_cptr mcptr_newsps(new memory_c(newsps, size, true));
@@ -934,7 +930,7 @@ hevc::parse_sps(memory_cptr &buffer,
 
 bool
 hevc::parse_pps(memory_cptr &buffer,
-                      pps_info_t &pps) {
+                pps_info_t &pps) {
   try {
     bit_cursor_c r(buffer->get_buffer(), buffer->get_size());
 
@@ -1138,7 +1134,7 @@ hevc::hevc_es_parser_c::discard_actual_frames(bool discard) {
 
 void
 hevc::hevc_es_parser_c::add_bytes(unsigned char *buffer,
-                                       size_t size) {
+                                  size_t size) {
   memory_slice_cursor_c cursor;
   int marker_size              = 0;
   int previous_marker_size     = 0;
@@ -1223,8 +1219,8 @@ hevc::hevc_es_parser_c::add_timecode(int64_t timecode) {
 
 void
 hevc::hevc_es_parser_c::write_nalu_size(unsigned char *buffer,
-                                             size_t size,
-                                             int this_nalu_size_length)
+                                        size_t size,
+                                        int this_nalu_size_length)
   const {
   unsigned int nalu_size_length = -1 == this_nalu_size_length ? m_nalu_size_length : this_nalu_size_length;
 
@@ -1536,7 +1532,7 @@ hevc::hevc_es_parser_c::handle_nalu(memory_cptr nalu) {
 
 bool
 hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
-                                         slice_info_t &si) {
+                                    slice_info_t &si) {
   try {
     bit_cursor_c r(buffer->get_buffer(), buffer->get_size());
     unsigned int i;
@@ -1797,7 +1793,7 @@ hevc::hevc_es_parser_c::cleanup() {
 
 memory_cptr
 hevc::hevc_es_parser_c::create_nalu_with_size(const memory_cptr &src,
-                                                   bool add_extra_data) {
+                                              bool add_extra_data) {
   int final_size = m_nalu_size_length + src->get_size(), offset = 0, size;
   unsigned char *buffer;
 
@@ -1844,7 +1840,7 @@ hevc::hevc_es_parser_c::get_par()
 
 std::pair<int64_t, int64_t> const
 hevc::hevc_es_parser_c::get_display_dimensions(int width,
-                                                    int height)
+                                               int height)
   const {
   assert(m_hevcc_ready && m_par_found);
 

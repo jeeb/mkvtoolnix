@@ -7,7 +7,6 @@
 
    extracts tracks from Matroska files into other files
 
-   Written by Matt Rice <topquark@sluggy.net>.
 */
 
 #ifndef MTX_XTR_HEVC_H
