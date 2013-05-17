@@ -745,10 +745,10 @@ hevc::parse_vps(memory_cptr &buffer,
   w.copy_bits(6, r);            // nuh_reserved_zero_6bits
   w.copy_bits(3, r);            // nuh_temporal_id_plus1
 
-  vps.id = w.copy_bits(4, r);                     // vps_video_parameter_set_id
-  w.copy_bits(2+6, r);                            // vps_reserved_three_2bits, vps_reserved_zero_6bits
-  bool max_sub_layers_minus1 = w.copy_bits(3, r); // vps_max_sub_layers_minus1
-  w.copy_bits(1+16, r);                           // vps_temporal_id_nesting_flag, vps_reserved_0xffff_16bits
+  vps.id = w.copy_bits(4, r);                               // vps_video_parameter_set_id
+  w.copy_bits(2+6, r);                                      // vps_reserved_three_2bits, vps_reserved_zero_6bits
+  unsigned int max_sub_layers_minus1 = w.copy_bits(3, r);   // vps_max_sub_layers_minus1
+  w.copy_bits(1+16, r);                                     // vps_temporal_id_nesting_flag, vps_reserved_0xffff_16bits
 
   profile_tier_copy(r, w, vps, max_sub_layers_minus1);  // profile_tier_level(vps_max_sub_layers_minus1)
 
@@ -825,9 +825,9 @@ hevc::parse_sps(memory_cptr &buffer,
   w.copy_bits(6, r);            // nuh_reserved_zero_6bits
   w.copy_bits(3, r);            // nuh_temporal_id_plus1
 
-  sps.vps_id = w.copy_bits(4, r);                 // sps_video_parameter_set_id
-  bool max_sub_layers_minus1 = w.copy_bits(3, r); // sps_max_sub_layers_minus1
-  w.copy_bits(1, r);                              // sps_temporal_id_nesting_flag
+  sps.vps_id = w.copy_bits(4, r);                           // sps_video_parameter_set_id
+  unsigned int max_sub_layers_minus1 = w.copy_bits(3, r);   // sps_max_sub_layers_minus1
+  w.copy_bits(1, r);                                        // sps_temporal_id_nesting_flag
 
   size_t vps_idx;
   for (vps_idx = 0; m_vps_info_list.size() > vps_idx; ++vps_idx)
