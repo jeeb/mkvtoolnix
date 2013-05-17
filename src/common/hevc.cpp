@@ -1544,11 +1544,6 @@ hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
     r.get_bits(6);                // nuh_reserved_zero_6bits
     r.get_bits(3);                // nuh_temporal_id_plus1
 
-    if (   (HEVC_NALU_TYPE_TRAIL_N != si.nalu_type)
-        && (HEVC_NALU_TYPE_TRAIL_R != si.nalu_type)
-        &&  (HEVC_NALU_TYPE_IDR_W_RADL != si.nalu_type))
-      return false;
-
     bool RapPicFlag = (si.nalu_type >= 16 && si.nalu_type <= 23); // RapPicFlag
     si.first_slice_segment_in_pic_flag = r.get_bits(1); // first_slice_segment_in_pic_flag
 
