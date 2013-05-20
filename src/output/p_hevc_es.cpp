@@ -39,7 +39,7 @@ hevc_es_video_packetizer_c(generic_reader_c *p_reader,
 
   set_track_type(track_video);
 
-  set_codec_id(MKV_V_MPEG4_HEVC);
+  set_codec_id(MKV_V_MPEGH_HEVC);
 
   m_parser.set_keep_ar_info(false);
 

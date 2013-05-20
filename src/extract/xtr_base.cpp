@@ -168,7 +168,7 @@ xtr_base_c::create_extractor(const std::string &new_codec_id,
     return new xtr_avi_c(new_codec_id, new_tid, tspec);
   else if (new_codec_id == MKV_V_MPEG4_AVC)
     return new xtr_avc_c(new_codec_id, new_tid, tspec);
-  else if (new_codec_id == MKV_V_MPEG4_HEVC)
+  else if (new_codec_id == MKV_V_MPEGH_HEVC)
     return new xtr_hevc_c(new_codec_id, new_tid, tspec);
   else if (balg::istarts_with(new_codec_id, "V_REAL/"))
     return new xtr_rmff_c(new_codec_id, new_tid, tspec);

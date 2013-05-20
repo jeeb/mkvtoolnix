@@ -1344,7 +1344,7 @@ kax_reader_c::create_video_packetizer(kax_track_t *t,
     } else if (t->codec_id == MKV_V_MPEG4_AVC)
       create_mpeg4_p10_video_packetizer(t, nti);
 
-    else if (t->codec_id == MKV_V_MPEG4_HEVC)
+    else if (t->codec_id == MKV_V_MPEGH_HEVC)
       create_hevc_video_packetizer(t, nti);
 
     else if (t->codec_id == MKV_V_THEORA) {
@@ -2223,7 +2223,7 @@ kax_reader_c::identify() {
       verbose_info.push_back("packetizer:mpeg4_p10_es_video");
     else if (track->codec_id == MKV_V_MPEG4_AVC)
       verbose_info.push_back("packetizer:mpeg4_p10_video");
-    else if (track->codec_id == MKV_V_MPEG4_HEVC)
+    else if (track->codec_id == MKV_V_MPEGH_HEVC)
       verbose_info.push_back("packetizer:hevc_es_video");
 
     if (0 != track->default_duration)

@@ -357,7 +357,7 @@ create_codec_dependent_private_info(KaxCodecPrivate &c_priv,
                : avcc.m_profile_idc == 244 ? "High 4:4:4 Predictive"
                :                             Y("Unknown"))
             % (avcc.m_level_idc / 10) % (avcc.m_level_idc % 10)).str();
-  } else if ((codec_id == MKV_V_MPEG4_HEVC) && ('v' == track_type) && (c_priv.GetSize() >= 4)) {
+  } else if ((codec_id == MKV_V_MPEGH_HEVC) && ('v' == track_type) && (c_priv.GetSize() >= 4)) {
     auto hevcc = hevc::hevcc_c::unpack(memory_cptr{new memory_c(c_priv.GetBuffer(), c_priv.GetSize(), false)});
 
     return (boost::format(Y(" (HEVC profile: %1% @L%2%.%3%)"))

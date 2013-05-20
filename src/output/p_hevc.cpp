@@ -27,7 +27,7 @@ hevc_video_packetizer_c(generic_reader_c *p_reader,
                         double fps,
                         int width,
                         int height)
-  : video_packetizer_c(p_reader, p_ti, MKV_V_MPEG4_HEVC, fps, width, height)
+  : video_packetizer_c(p_reader, p_ti, MKV_V_MPEGH_HEVC, fps, width, height)
   , m_nalu_size_len_src(0)
   , m_nalu_size_len_dst(0)
   , m_max_nalu_size(0)
