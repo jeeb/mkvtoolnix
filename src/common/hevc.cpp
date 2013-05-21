@@ -145,8 +145,10 @@ hevcc_c::pack() {
   if (!*this)
     return memory_cptr{};
 
-  unsigned int total_size = 6 + 1;
+  unsigned int total_size = 7 + 1;
 
+  for (auto &mem : m_vps_list)
+    total_size += mem->get_size() + 2;
   for (auto &mem : m_sps_list)
     total_size += mem->get_size() + 2;
   for (auto &mem : m_pps_list)
@@ -174,6 +176,7 @@ hevcc_c::pack() {
   buffer[4] = 0xfc | (m_nalu_size_length - 1);
   buffer   += 5;
 
+  write_list(m_vps_list, 0xe0);
   write_list(m_sps_list, 0xe0);
   write_list(m_pps_list, 0x00);
 
@@ -184,7 +187,7 @@ hevcc_c
 hevcc_c::unpack(memory_cptr const &mem) {
   hevcc_c hevcc;
 
-  if (!mem || (6 > mem->get_size()))
+  if (!mem || (7 > mem->get_size()))
     return hevcc;
 
   try {
@@ -205,6 +208,7 @@ hevcc_c::unpack(memory_cptr const &mem) {
     hevcc.m_level_idc        = in.read_uint8();
     hevcc.m_nalu_size_length = (in.read_uint8() & 0x03) + 1;
 
+    read_list(hevcc.m_vps_list, 0x0f);
     read_list(hevcc.m_sps_list, 0x0f);
     read_list(hevcc.m_pps_list, 0xff);
 
