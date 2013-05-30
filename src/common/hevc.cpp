@@ -752,9 +752,9 @@ hevc::parse_vps(memory_cptr &buffer,
                 vps_info_t &vps) {
   int size              = buffer->get_size();
   unsigned char *newsps = (unsigned char *)safemalloc(size + 100);
-  memory_cptr mcptr_newsps(new memory_c(newsps, size, true));
+  memory_cptr mcptr_newsps(new memory_c(newsps, size + 100, true));
   bit_reader_c r(buffer->get_buffer(), size);
-  bit_writer_c w(newsps, size);
+  bit_writer_c w(newsps, size + 100);
   unsigned int i, j;
 
   memset(&vps, 0, sizeof(vps));
@@ -805,7 +805,7 @@ hevc::parse_vps(memory_cptr &buffer,
   }
 
   if (w.copy_bits(1, r) == 1)    // vps_extension_flag
-    while (!r.eof())
+    while (r.get_remaining_bits())
       w.copy_bits(1, r);        // vps_extension_data_flag
 
   w.put_bit(1);
@@ -826,9 +826,9 @@ hevc::parse_sps(memory_cptr &buffer,
                 bool keep_ar_info) {
   int size              = buffer->get_size();
   unsigned char *newsps = (unsigned char *)safemalloc(size + 100);
-  memory_cptr mcptr_newsps(new memory_c(newsps, size, true));
+  memory_cptr mcptr_newsps(new memory_c(newsps, size + 100, true));
   bit_reader_c r(buffer->get_buffer(), size);
-  bit_writer_c w(newsps, size);
+  bit_writer_c w(newsps, size + 100);
   unsigned int i;
 
   keep_ar_info = !hack_engaged(ENGAGE_REMOVE_BITSTREAM_AR_INFO);
@@ -934,7 +934,7 @@ hevc::parse_sps(memory_cptr &buffer,
   }
 
   if (w.copy_bits(1, r) == 1) // sps_extension_flag
-    while (!r.eof())
+    while (r.get_remaining_bits())
       w.copy_bits(1, r);  // sps_extension_data_flag
 
   w.put_bit(1);
