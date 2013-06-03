@@ -133,6 +133,7 @@ struct sps_info_t {
   short_term_ref_pic_set_t short_term_ref_pic_sets[64];
 
   unsigned int chroma_format_idc;
+  unsigned int separate_colour_plane_flag;
   unsigned int log2_min_luma_coding_block_size_minus3;
   unsigned int log2_diff_max_min_luma_coding_block_size;
   unsigned int log2_max_pic_order_cnt_lsb;
@@ -166,6 +167,7 @@ struct pps_info_t {
   unsigned sps_id;
 
   bool dependent_slice_segments_enabled_flag;
+  bool output_flag_present_flag;
   unsigned int num_extra_slice_header_bits;
 
   uint32_t checksum;

@@ -865,7 +865,7 @@ hevc::parse_sps(memory_cptr &buffer,
   sps.id = gecopy(r, w);  // sps_seq_parameter_set_id
 
   if ((sps.chroma_format_idc = gecopy(r, w)) == 3) // chroma_format_idc
-    w.copy_bits(1, r);    // separate_colour_plane_flag
+    sps.separate_colour_plane_flag = w.copy_bits(1, r);    // separate_colour_plane_flag
 
   sps.width = gecopy(r, w); // pic_width_in_luma_samples
   sps.height = gecopy(r, w); // pic_height_in_luma_samples
@@ -965,7 +965,7 @@ hevc::parse_pps(memory_cptr &buffer,
     pps.id     = geread(r);     // pps_pic_parameter_set_id
     pps.sps_id = geread(r);     // pps_seq_parameter_set_id
     pps.dependent_slice_segments_enabled_flag = r.get_bits(1);  // dependent_slice_segments_enabled_flag
-    r.get_bits(1);  // output_flag_present_flag
+    pps.output_flag_present_flag = r.get_bits(1);  // output_flag_present_flag
     pps.num_extra_slice_header_bits = r.get_bits(3);  // num_extra_slice_header_bits
 
     pps.checksum          = calc_adler32(buffer->get_buffer(), buffer->get_size());
@@ -1610,6 +1610,16 @@ hevc::hevc_es_parser_c::parse_slice(memory_cptr &buffer,
         r.get_bits(1);  // slice_reserved_undetermined_flag[i]
 
       si.type = geread(r);  // slice_type
+
+      if (pps.output_flag_present_flag)
+          r.get_bits(1);    // pic_output_flag
+
+      if (sps.separate_colour_plane_flag == 1)
+          r.get_bits(1);    // colour_plane_id
+
+      if ( (si.nalu_type != HEVC_NALU_TYPE_IDR_W_RADL) && (si.nalu_type != HEVC_NALU_TYPE_IDR_N_LP) ) {
+          si.pic_order_cnt_lsb = r.get_bits(sps.log2_max_pic_order_cnt_lsb); // slice_pic_order_cnt_lsb
+      }
 
       ++m_stats.num_slices_by_type[1 < si.type ? 2 : si.type];
     }
