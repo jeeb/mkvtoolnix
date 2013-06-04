@@ -69,6 +69,7 @@
 #define MKV_V_DIRAC      "V_DIRAC"
 #define MKV_V_VP8        "V_VP8"
 #define MKV_V_VP9        "V_VP9"
+#define MKV_V_MPEGH_HEVC  "V_MPEGH/ISO/HEVC"
 
 #define MKV_S_TEXTUTF8   "S_TEXT/UTF8"
 #define MKV_S_TEXTSSA    "S_TEXT/SSA"
