@@ -291,12 +291,6 @@ geread(bit_reader_c &r) {
 }
 
 static int
-sgeread(bit_reader_c &r) {
-  int v = geread(r);
-  return v & 1 ? (v + 1) / 2 : -(v / 2);
-}
-
-static int
 sgecopy(bit_reader_c &r,
         bit_writer_c &w) {
   int v = gecopy(r, w);
